@@ -59,6 +59,9 @@ level; it belongs next to the numbers.
 - **Redo a take only if you misread the phrase or were interrupted**, never
   because you think the mic misheard you. Redoing the bad takes would bias the
   test.
+- **Keep, redo or stop after each take.** Enter keeps it, `r` throws it away, `q`
+  keeps it and stops. Only kept takes are scored. A take with dropped samples (the
+  computer got busy) is thrown away and asked for again.
 - **The order is shuffled** per condition (fixed by `--seed`), so fatigue
   doesn't land on the same phrases every time.
 - **One speaker on one setup is a result, not a benchmark.** Publish it with the
