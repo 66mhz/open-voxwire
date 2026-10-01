@@ -1093,6 +1093,12 @@ class LocalOnly:
 
 app.add_middleware(LocalOnly)
 
+# How every launcher serves the app (server.py, menubar.py, tray.py): loopback
+# only, with proxy headers off. Uvicorn otherwise trusts X-Forwarded-For from
+# 127.0.0.1, so a local reverse proxy, or any local process, would replace the
+# peer LocalOnly checks with whatever address the header names.
+UVICORN = {"host": "127.0.0.1", "port": 8123, "log_level": "warning", "proxy_headers": False}
+
 
 def _stream_start(cfg: dict, evt: dict) -> tuple[dict | None, str | None]:
     """Apply a start frame to a copy of cfg. Returns (new_cfg, None), or
@@ -1333,4 +1339,4 @@ if not os.environ.get("VOXWIRE_NO_IDLE_WATCH"):
 if __name__ == "__main__":
     import uvicorn
     print("\n  Voxwire  →  http://127.0.0.1:8123\n")
-    uvicorn.run(app, host="127.0.0.1", port=8123, log_level="warning")
+    uvicorn.run(app, **UVICORN)
