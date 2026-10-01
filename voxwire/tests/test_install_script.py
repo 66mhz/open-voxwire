@@ -48,10 +48,15 @@ def _exe(path: Path, body: str) -> None:
     path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
+# The macOS cases need ffmpeg missing, which can't be staged when a system dir
+# has it. Linux never looks for ffmpeg, so its cases run everywhere.
+NO_SYSTEM_FFMPEG = pytest.mark.skipif(
+    bool(shutil.which("ffmpeg", path=SYSTEM_PATH)),
+    reason="this machine has ffmpeg in a system dir, so 'no ffmpeg' can't be staged")
+
+
 @pytest.fixture
 def run_install(tmp_path):
-    if shutil.which("ffmpeg", path=SYSTEM_PATH):
-        pytest.skip("this machine has ffmpeg in a system dir, so 'no ffmpeg' can't be staged")
     repo, bin_, state = tmp_path / "repo", tmp_path / "bin", tmp_path / "state"
     for d in (repo / "scripts", repo / "voxwire", bin_, state):
         d.mkdir(parents=True)
@@ -71,6 +76,7 @@ def run_install(tmp_path):
     return run
 
 
+@NO_SYSTEM_FFMPEG
 def test_a_mac_without_homebrew_is_told_how_to_get_ffmpeg(run_install):
     proc, calls = run_install(STUB_OS="Darwin")
     assert proc.returncode == 1
@@ -78,6 +84,7 @@ def test_a_mac_without_homebrew_is_told_how_to_get_ffmpeg(run_install):
     assert "uv venv" not in calls                       # stopped before touching anything
 
 
+@NO_SYSTEM_FFMPEG
 def test_a_mac_with_homebrew_gets_ffmpeg_and_the_mlx_stack(run_install):
     proc, calls = run_install(brew=True, STUB_OS="Darwin", STUB_ARCH="arm64")
     assert proc.returncode == 0, proc.stderr
