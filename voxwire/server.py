@@ -37,7 +37,6 @@ from typing import Annotated
 from urllib.parse import urlsplit
 
 import numpy as np
-import scipy.signal as sps
 import sounddevice as sd
 import soundfile as sf
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -393,13 +392,6 @@ def _pick_samplerate(device_index: int) -> int:
     return int(sd.query_devices(device_index)["default_samplerate"])
 
 
-def _resample_to_target(x: np.ndarray, sr: int) -> np.ndarray:
-    if sr == TARGET_SR:
-        return x.astype(np.float32)
-    g = math.gcd(sr, TARGET_SR)
-    return sps.resample_poly(x, TARGET_SR // g, sr // g).astype(np.float32)
-
-
 def clip_stats(clip16k: np.ndarray, native_sr: int) -> dict:
     eps = 1e-10
     peak = float(np.max(np.abs(clip16k))) if clip16k.size else 0.0
@@ -589,14 +581,10 @@ def _gather(from_frame: int, to_frame: int) -> np.ndarray:
 
 def _finalize_clip(raw: np.ndarray, native_sr: int, fusion_mode: str = "fusion") -> dict:
     """Resample + save a captured clip and register it as a recording. A 2-channel
-    capture (throat=ch0, air=ch1) is fused to mono before saving (BYT-118)."""
+    capture (throat=ch0, air=ch1) is fused to mono before saving (BYT-118), by
+    fusion.render_capture, the same function the fusion evaluation scores."""
     global _rec_counter
-    if raw.ndim == 2 and raw.shape[1] >= 2:
-        throat = _resample_to_target(raw[:, 0], native_sr)
-        air = _resample_to_target(raw[:, 1], native_sr)
-        clip = fusion.fuse(throat, air, TARGET_SR, mode=fusion_mode, do_align=False)
-    else:
-        clip = _resample_to_target(raw if raw.ndim == 1 else raw[:, 0], native_sr)
+    clip = fusion.render_capture(raw, native_sr, fusion_mode)
     _rec_counter += 1
     rid = _rec_counter
     ts = datetime.now()

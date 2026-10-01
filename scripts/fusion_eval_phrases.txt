@@ -1,0 +1,57 @@
+# Phrases for the fusion evaluation (scripts/fusion_eval.py, docs/fusion-eval.md).
+#
+# Things you'd say to a voice agent or while dictating, heavy in the consonants a
+# throat mic loses (s, sh, f, th, t, k, p, ch). Rules, checked by the tests:
+# no numbers (speech-to-text may write "6" or "six"), no words whose spacing
+# varies ("screenshot" / "screen shot"), nothing private, at most ten words.
+# One phrase per line; blank lines and lines starting with '#' are skipped.
+
+# commands
+git status
+stash the changes
+show the diff
+run the tests
+fix the failing test
+push the fix branch
+start a new branch
+check the server logs
+restart the service
+stop the stream
+list the files in this folder
+search for the settings file
+save the file and close the tab
+skip this step
+split the screen
+scroll to the top
+select the last line
+paste it at the cursor
+cancel the task
+create a pull request
+confirm the schedule
+assign it to the support team
+archive the finished tasks
+switch the theme to dark
+
+# sentences
+she sells fresh fish
+the next step is the hardest
+set the speech threshold higher
+fetch the latest status
+send a short summary
+ship it this afternoon
+the last test passed
+sync the shared folder
+this is the best chance
+check the thick cables
+it is a soft fast sound
+keep the cursor still
+stash this and sync later
+the fix is simple
+sketch a quick plan
+ask them to check it
+
+# short
+undo that
+next
+stop
+save it
