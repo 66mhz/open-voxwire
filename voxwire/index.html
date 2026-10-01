@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voxwire</title>
+<style>
+  :root {
+    --bg:#0d1013; --panel:#151a1f; --line:#232b33; --fg:#e6edf3;
+    --dim:#8b98a5; --accent:#4ade80; --accent2:#38bdf8; --warn:#fbbf24; --bad:#f87171;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { font-size:19px; margin:0 0 2px; letter-spacing:-.01em; }
+  .sub { color:var(--dim); font-size:13px; margin-bottom:22px; }
+  .panel { background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  label { display:block; font-size:12px; color:var(--dim); margin-bottom:6px;
+    text-transform:uppercase; letter-spacing:.04em; }
+  select, input[type=text] { width:100%; background:#0d1116; color:var(--fg); border:1px solid var(--line);
+    border-radius:8px; padding:9px 10px; font-size:14px; -webkit-appearance:none; }
+  input[type=text]::placeholder { color:#4a5560; }
+  .rec-cmd { font-size:16px; font-weight:600; line-height:1.5; white-space:pre-wrap;
+    word-break:break-word; padding:9px 11px; margin-top:8px; border-radius:7px;
+    background:#12261c; border:1px solid #2f6b4f; color:#b8f5cf; }
+  .rec-cmd.empty { display:none; }
+  .rec-cmd .lbl { display:block; font-size:10px; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--accent); opacity:.7; margin-bottom:2px; }
+  .secTitle { font-size:12px; color:var(--dim); text-transform:uppercase;
+    letter-spacing:.04em; margin:0 0 12px; display:flex; justify-content:space-between; }
+  #talk { width:100%; padding:22px; font-size:17px; font-weight:600; border:none;
+    border-radius:12px; background:var(--accent2); color:#04141d; cursor:pointer;
+    transition:background .12s, transform .05s; touch-action:none; user-select:none; }
+  #talk:hover { background:#5cc7f5; }
+  #talk.rec { background:var(--bad); color:#2a0808; animation:pulse 1s infinite; }
+  #talk:active { transform:scale(.995); }
+  @keyframes pulse { 50% { opacity:.82; } }
+  .hint { text-align:center; color:var(--dim); font-size:12px; margin-top:8px; }
+  .optline { display:flex; align-items:center; gap:7px; justify-content:center;
+    margin-top:8px; color:var(--dim); font-size:12px; }
+  .meter { height:10px; background:#0d1116; border-radius:6px; overflow:hidden;
+    margin-top:14px; border:1px solid var(--line); }
+  .meter > i { display:block; height:100%; width:0%;
+    background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .08s linear; }
+  .micbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+  #armBtn, #dictBtn { flex:0 0 auto; border:1px solid var(--line); border-radius:8px; padding:8px 14px;
+    font-size:13px; font-weight:600; cursor:pointer; background:#0d1116; color:var(--dim); }
+  #armBtn.on { background:#1e3a2f; border-color:#2f6b4f; color:var(--accent); }
+  #dictBtn.on { background:#2a1e3a; border-color:#5a3f8b; color:#c9a9ff; }
+  #armBtn:hover, #dictBtn:hover { border-color:var(--dim); }
+  .micbar select { flex:0 0 auto; width:auto; padding:7px 9px; font-size:12px; }
+  .batt { margin-left:auto; font-size:12px; color:var(--dim); font-variant-numeric:tabular-nums;
+    white-space:nowrap; }
+  .batt b { color:var(--fg); }
+  #talk:disabled { opacity:.4; cursor:not-allowed; }
+  .rec-card { border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    margin-bottom:10px; background:#0f141a; }
+  .rec-head { display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12px; color:var(--dim); font-variant-numeric:tabular-nums; margin-bottom:8px; }
+  .rec-head b { color:var(--fg); }
+  .rec-head .warnpill { color:var(--warn); }
+  audio { width:100%; height:34px; margin:2px 0 8px; }
+  .rec-text { font-size:15px; line-height:1.5; white-space:pre-wrap; word-break:break-word;
+    min-height:22px; padding:8px 10px; background:#0d1116; border-radius:7px;
+    border:1px solid var(--line); }
+  .rec-text.empty { color:var(--dim); font-style:italic; border-style:dashed; }
+  .rec-meta { font-size:11px; color:var(--dim); margin-top:6px; font-variant-numeric:tabular-nums; }
+  .rec-meta .big { color:var(--accent); }
+  .rec-btns { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .rec-btns button, .rec-btns a { flex:1; min-width:120px; text-align:center;
+    background:#0d1116; color:var(--fg); border:1px solid var(--line); border-radius:8px;
+    padding:7px; font-size:12px; cursor:pointer; text-decoration:none; }
+  .rec-btns button:hover, .rec-btns a:hover { border-color:var(--dim); }
+  .rec-btns .primary { background:#12303f; border-color:#1d4a61; color:#a9e6ff; }
+  .rec-btns .del:hover { border-color:var(--bad); color:var(--bad); }
+  .empty-note { color:var(--dim); font-size:13px; font-style:italic; }
+  .err { color:var(--bad); font-size:12px; margin-top:6px; }
+  .foot { color:var(--dim); font-size:11px; margin-top:18px; text-align:center; }
+  kbd { background:#0d1116; border:1px solid var(--line); border-radius:4px;
+    padding:1px 5px; font-size:11px; }
+  .dl-note { color:var(--warn); font-size:11px; margin-left:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Voxwire</h1>
+  <div class="sub">On-device speech-to-text · throat-mic → agent command path</div>
+
+  <div class="panel">
+    <label>Input device <span id="devRefresh" style="cursor:pointer;color:var(--accent2)">↻</span></label>
+    <select id="device"></select>
+    <details class="adv" style="margin-top:14px">
+      <summary style="cursor:pointer;color:var(--accent2);font-size:12px;text-transform:uppercase;letter-spacing:.06em;user-select:none">Advanced settings</summary>
+      <label style="margin-top:12px">STT model <span id="modelNote" class="dl-note"></span></label>
+      <select id="model"></select>
+      <label style="margin-top:12px">Command context <span style="text-transform:none;letter-spacing:0;color:#4a5560">— optional hint for fixup</span></label>
+      <input id="ctx" type="text" placeholder="e.g. short shell/git commands; imperative style">
+      <div class="optline" style="justify-content:flex-start;gap:8px">
+        <input type="checkbox" id="llmFix">
+        <label for="llmFix" style="margin:0;text-transform:none;letter-spacing:0;font-size:12px;cursor:pointer">Command fixup — faithful cleanup only (off = paste raw STT, recommended)</label>
+      </div>
+      <div class="optline" style="justify-content:flex-start;gap:8px">
+        <input type="checkbox" id="autoCopy">
+        <label for="autoCopy" style="margin:0;text-transform:none;letter-spacing:0;font-size:12px;cursor:pointer">auto-copy result to clipboard (then ⌘V)</label>
+      </div>
+      <div class="hint" id="llmStatus" style="margin-top:6px;text-align:left"></div>
+
+      <label style="margin-top:14px">Capture</label>
+      <div class="optline" style="justify-content:flex-start;gap:8px">
+        <input type="checkbox" id="dualMic">
+        <label for="dualMic" style="margin:0;text-transform:none;letter-spacing:0;font-size:12px;cursor:pointer">Dual-mic fusion — throat + air from one 2-channel device (throat = ch0, air = ch1)</label>
+      </div>
+      <select id="fusionMode" style="margin-top:6px" hidden>
+        <option value="fusion">fusion — throat lows + air consonants (recommended)</option>
+        <option value="throat">throat only (stealth)</option>
+        <option value="air">air only</option>
+      </select>
+      <div class="hint" id="dualMicNote" style="margin-top:4px;text-align:left"></div>
+    </details>
+  </div>
+
+  <div class="panel">
+    <div class="secTitle"><span>Dictate into VSCode (or any app) — global push-to-talk</span></div>
+    <div class="micbar" style="flex-wrap:wrap">
+      <button id="dictBtn">⌨︎ Enable global dictation</button>
+      <select id="hotkey" title="push-to-talk key / chord">
+        <option value="alt+cmd">hold ⌥ + ⌘ (recommended)</option>
+        <option value="ctrl+alt">hold Ctrl + ⌥</option>
+        <option value="alt_r">hold Right ⌥</option>
+        <option value="f8">hold F8</option>
+        <option value="cmd+z+space">hold ⌘+Z+Space (⚠ fires Undo + Spotlight)</option>
+      </select>
+      <select id="insertMode" title="what to paste">
+        <option value="command">paste corrected command</option>
+        <option value="raw">paste raw transcript</option>
+      </select>
+      <button id="testPaste" style="flex:0 0 auto;padding:8px 12px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:#0d1116;color:var(--fg);cursor:pointer">Test paste</button>
+    </div>
+    <div class="hint" id="dictStatus" style="text-align:left;margin-top:4px">off</div>
+    <div class="hint" id="permStatus" style="text-align:left;margin-top:8px">permissions: checking…</div>
+    <div class="rec-btns" style="margin-top:8px">
+      <button id="reqPerms">1 · Request permissions</button>
+      <button id="recheckPerms">Recheck</button>
+    </div>
+    <div class="hint" style="text-align:left;margin-top:8px;line-height:1.55">
+      Hold the hotkey <b>while focused in your editor</b>, murmur, release → text pastes at your cursor.
+      Needs macOS <b>Accessibility</b> + <b>Input Monitoring</b> for the app running the server
+      (System Settings → Privacy &amp; Security), then restart it.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="micbar">
+      <button id="armBtn">🎙 Arm mic</button>
+      <select id="idle" title="auto-release the mic after it sits idle (saves battery)">
+        <option value="60">idle 1 min</option>
+        <option value="120" selected>idle 2 min</option>
+        <option value="300">idle 5 min</option>
+        <option value="0">stay on</option>
+      </select>
+      <span id="idleLeft" style="font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums"></span>
+      <span class="batt" id="batt">🔋 —</span>
+    </div>
+    <button id="talk">Hold to talk</button>
+    <div class="hint">Hold the button (or press <kbd>Space</kbd>) and murmur. Release to save + transcribe.</div>
+    <div class="optline">
+      <input type="checkbox" id="autoTx" checked>
+      <label for="autoTx" style="margin:0;text-transform:none;letter-spacing:0;font-size:12px;cursor:pointer">auto-transcribe on release</label>
+    </div>
+    <div class="meter"><i id="meter"></i></div>
+    <div class="hint" id="micStatus" style="margin-top:8px">mic released — Arm it for instant press-to-talk, or just hold the button (first press re-opens the BT link, ~1–2s).</div>
+  </div>
+
+  <div class="panel">
+    <div class="secTitle"><span>Recordings — listen to what the mic captured</span>
+      <span id="clearAll" style="cursor:pointer;color:var(--dim)">clear all</span></div>
+    <div id="list"><div class="empty-note">No recordings yet — hold to talk above.</div></div>
+  </div>
+
+  <div class="foot">Records server-side via sounddevice · clips saved to recordings/ · first use of a model downloads from HuggingFace</div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const api = (p, body) => fetch(p, body!==undefined ? {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)} : {}).then(r=>r.json());
+const LS = {  // persist UI choices across reloads (safe if storage is blocked)
+  get:(k,d)=>{ try{ const v=localStorage.getItem(k); return v==null?d:v; }catch(e){ return d; } },
+  set:(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} },
+};
+let recording=false, MODELS={}, PREROLL_MS=800, warmSr=null, armed=false;
+
+async function arm(){
+  const idx=parseInt($('#device').value), idle=parseInt($('#idle').value);
+  $('#micStatus').textContent='opening BT link…';
+  const r=await api('/api/mic/arm',{device_index:idx, idle_timeout:idle, ...capBody()});
+  if(r.error){ $('#micStatus').innerHTML=`<span style="color:var(--bad)">mic error: ${escapeHtml(r.error)}</span>`; return; }
+  armed=true; warmSr=r.samplerate; setArmUI();
+  $('#micStatus').innerHTML = `mic armed ✓ · ${r.samplerate} Hz`
+    + (r.narrowband ? ` · <span style="color:var(--warn)">narrowband (HFP)</span>` : ` · wideband HFP`)
+    + ` · ${PREROLL_MS}ms pre-roll · link held open — instant press, no BT delay`;
+}
+async function release(){
+  await api('/api/mic/release',{});
+  armed=false; setArmUI();
+  $('#micStatus').innerHTML='mic released — sleeping to save battery. First press after this re-opens the BT link (~1–2s).';
+}
+function toggleArm(){ armed ? release() : arm(); }
+function setArmUI(){
+  const b=$('#armBtn');
+  b.textContent = armed ? '● Mic armed — release' : '🎙 Arm mic';
+  b.classList.toggle('on', armed);
+}
+async function pollBattery(){
+  try {
+    const r=await api('/api/mic/battery');
+    if(r.available) $('#batt').innerHTML = `🔋 <b>${r.battery}</b>${r.rssi?` · ${r.rssi} dBm`:''}`;
+    else $('#batt').textContent='🔋 n/a';
+  } catch(e){}
+}
+
+async function loadDevices() {
+  const d = await api('/api/devices');
+  const dev = $('#device');
+  const prevName = dev.selectedOptions[0]?.dataset.name;   // keep the user's pick across refreshes
+  dev.innerHTML='';
+  d.devices.forEach(x => {
+    const o=document.createElement('option'); o.value=x.index;
+    let t=''; if(x.tags.includes('IASUS')) t='  ★IASUS'; else if(x.tags.includes('BT')) t='  ·BT';
+    o.textContent=`[${x.index}] ${x.name}${t}`; if(x.tags.includes('IASUS')) o.dataset.pref='1';
+    o.dataset.ch = x.channels || 1; o.dataset.name = x.name;
+    dev.appendChild(o);
+  });
+  // Re-select by name (indices shift when a device is plugged in or out): the
+  // device picked before this refresh, else the one the server has warm, else
+  // the preferred throat mic. Always jumping to the throat mic undid a chosen
+  // Aggregate Device after every transcription and silently turned dual-mic off.
+  const opts=[...dev.options];
+  const pick = opts.find(o=>prevName!==undefined && o.dataset.name===prevName)
+    || opts.find(o=>d.warm_device!=null && o.value===String(d.warm_device))
+    || opts.find(o=>o.dataset.pref);
+  if(pick) dev.value=pick.value;
+  updateDualMicAvail();
+  const mod=$('#model'); mod.innerHTML=''; MODELS={};
+  d.models.forEach(m => {
+    MODELS[m.key]=m;
+    const o=document.createElement('option'); o.value=m.key;
+    o.textContent = m.label + (m.cached ? '  ✓' : `  ⬇ ~${m.approx_gb}GB`);
+    mod.appendChild(o);
+  });
+  const savedModel = LS.get('stt.model', d.default_model);
+  mod.value = [...mod.options].some(o=>o.value===savedModel) ? savedModel : d.default_model;
+  if(d.preroll_ms) PREROLL_MS=d.preroll_ms;
+  updateModelNote();
+  if(d.llm) renderLlm(d.llm);
+}
+// Fixup status line. The model name and hint come from server config, so escape them.
+let fixupPoll=null;
+function renderLlm(llm){
+  const st=llm.state;
+  const label = st==='ready' ? '<span style="color:var(--accent)">ready ✓</span>'
+    : st==='loading' ? 'loading…'
+    : st==='downloaded' ? 'downloaded · loads on first use'
+    : st==='needs-download' ? '<span style="color:var(--warn)">downloads on first use (~2GB)</span>'
+    : st==='error' ? '<span style="color:var(--bad)">load failed</span>'
+    : st==='unavailable' ? `<span style="color:var(--dim)">${escapeHtml(llm.hint||'unavailable')}</span>`
+    : escapeHtml(st);
+  const short=escapeHtml((llm.model||'').split('/').pop());
+  $('#llmStatus').innerHTML = `fixup: ${label} · <span style="color:var(--dim)">${llm.mode==='local'?'on-device':'remote'} · ${short} (auto)</span>`;
+  clearTimeout(fixupPoll);
+  if(st==='loading') fixupPoll=setTimeout(refreshFixup, 1500);   // follow a warm-up until it settles
+}
+async function refreshFixup(){ try{ renderLlm(await api('/api/fixup')); }catch(e){} }
+$('#device')?.addEventListener('change', ()=>{ updateDualMicAvail(); pushConfig({device_index:parseInt($('#device').value), channels:capBody().channels}); if(armed) arm(); pollBattery(); });
+
+// ── dual-mic (throat + air) capture ──
+function capBody(){
+  const on = $('#dualMic').checked && !$('#dualMic').disabled;
+  return { channels: on ? 2 : 1, fusion_mode: $('#fusionMode').value };
+}
+function updateDualMicAvail(){
+  const opt = $('#device').selectedOptions[0];
+  const ch = opt ? parseInt(opt.dataset.ch || '1') : 1;
+  const dm = $('#dualMic'), capable = ch >= 2;
+  dm.disabled = !capable;
+  if(!capable) dm.checked = false;
+  const on = dm.checked && capable;
+  $('#fusionMode').hidden = !on;
+  $('#dualMicNote').textContent = !capable
+    ? 'selected device is mono — dual-mic needs a 2-channel interface or a macOS Aggregate Device'
+    : on ? 'fusing throat (ch0) + air (ch1) before STT'
+         : 'this device has ≥2 input channels — enable to fuse throat + air';
+}
+function updateModelNote() {
+  const m=MODELS[$('#model').value];
+  $('#modelNote').textContent = (m && !m.cached) ? `first use downloads ~${m.approx_gb}GB` : '';
+}
+$('#model')?.addEventListener('change', ()=>{ updateModelNote(); LS.set('stt.model', $('#model').value); pushConfig({model:$('#model').value}); });
+
+async function meterLoop(){   // runs continuously; also syncs arm state (server may auto-release)
+  try {
+    const l=await api('/api/level');
+    const pct=Math.max(0,Math.min(100,(l.level_db+60)/60*100));
+    const m=$('#meter'); m.style.width=pct+'%';
+    m.style.opacity = l.warm ? '1' : '0.25';
+    if(l.warm !== armed){                 // a press auto-armed it, or idle auto-released it
+      armed=l.warm; setArmUI();
+      if(!armed){ $('#micStatus').innerHTML='mic released (idle) — sleeping to save battery.'; pollBattery(); }
+    }
+    $('#idleLeft').textContent = (l.warm && l.idle_left!=null) ? `auto-release in ${l.idle_left}s` : '';
+    if(l.dict_enabled!==undefined && l.dict_enabled!==dictOn){ dictOn=l.dict_enabled; setDictUI(); }
+    if(dictOn){
+      const hk=($('#hotkey').selectedOptions[0]?.textContent||$('#hotkey').value).replace(/\s*\(.*\)/,'');
+      const s = l.dict_recording ? '● recording — release to paste' : `listening · ${hk} while in VSCode`;
+      $('#dictStatus').innerHTML = s + (l.dict_last?` · last: <b>${escapeHtml(l.dict_last)}</b>`:'');
+    }
+  } catch(e){}
+  setTimeout(meterLoop, 120);
+}
+
+async function startRec(){
+  if(recording) return;
+  const r=await api('/api/record/start',{device_index:parseInt($('#device').value), ...capBody()});
+  if(r.error){ alert(r.error); return; }
+  recording=true; $('#talk').classList.add('rec'); $('#talk').textContent='● Recording… release to stop';
+}
+async function stopRec(){
+  if(!recording) return;
+  recording=false; $('#talk').classList.remove('rec'); $('#talk').textContent='Hold to talk';
+  const r=await api('/api/record/stop',{});
+  if(r.error){ alert(r.error); return; }
+  await renderList();                       // player shows immediately
+  if($('#autoTx').checked) runTranscribe(r.id, $('#model').value);
+}
+
+function statLine(s){
+  return `${s.duration_s}s · SNR <b>${s.snr_db}dB</b> · peak ${s.peak_db}dB · ${s.native_sr}Hz`
+    + (s.low_bandwidth ? ` · <span class="warnpill">⚠ narrowband (HFP)</span>` : '');
+}
+
+async function renderList(){
+  const d=await api('/api/recordings');
+  const list=$('#list');
+  if(!d.recordings.length){ list.innerHTML='<div class="empty-note">No recordings yet — hold to talk above.</div>'; return; }
+  list.innerHTML='';
+  d.recordings.forEach(r=>{
+    const s=r.stats;
+    const txKeys=Object.keys(r.transcripts||{});
+    const div=document.createElement('div'); div.className='rec-card'; div.id='rec'+r.id;
+    div.innerHTML = `
+      <div class="rec-head"><span>#${r.id} · ${r.ts}</span><span>${statLine(s)}</span></div>
+      <audio controls preload="none" src="/api/recordings/${r.id}.wav"></audio>
+      <div class="rec-text ${txKeys.length?'':'empty'}" id="txt${r.id}">${
+        txKeys.length ? escapeHtml(r.transcripts[txKeys[txKeys.length-1]] || '(empty)') : 'not transcribed yet'}</div>
+      <div class="rec-cmd ${r.corrected?'':'empty'}" id="cmd${r.id}"><span class="lbl" id="cmdlbl${r.id}">command</span><span id="cmdtxt${r.id}">${r.corrected?escapeHtml(r.corrected):''}</span></div>
+      <div class="rec-meta" id="meta${r.id}"></div>
+      <div class="rec-btns">
+        <button class="primary" onclick="runTranscribe(${r.id}, $('#model').value)">Transcribe</button>
+        <button onclick="runCorrect(${r.id})">✨ Fix as command</button>
+        <button onclick="copyCmd(${r.id})">Copy command</button>
+        <a href="/api/recordings/${r.id}.wav" download="rec${r.id}.wav">Download</a>
+        <button class="del" onclick="del(${r.id})">Delete</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+async function runTranscribe(rid, model){
+  const txt=$('#txt'+rid), meta=$('#meta'+rid);
+  if(!txt) return;
+  const m=MODELS[model];
+  txt.classList.remove('empty');
+  txt.textContent = (m && !m.cached) ? `⬇ downloading ${model} (~${m.approx_gb}GB, first time)…` : '…transcribing…';
+  meta.textContent='';
+  const r=await api('/api/transcribe',{model, recording_id:rid});
+  if(r.error){ txt.classList.add('empty'); txt.textContent='—'; meta.innerHTML=`<span class="err">${escapeHtml(r.error)}</span>`; return; }
+  if(m) m.cached=true;  // it's cached now
+  loadDevices();        // refresh dropdown ticks
+  txt.textContent = r.text || '(empty — no speech detected)';
+  const fast = r.rtf!=null && r.rtf<1 ? 'big' : '';
+  meta.innerHTML = `<span class="${fast}">latency <b>${r.total_s}s</b></span> · infer ${r.infer_s}s`
+    + (r.load_s>0?` · load ${r.load_s}s`:'') + (r.rtf!=null?` · <b>${r.rtf}× RT</b>`:'')
+    + ` · <span style="color:var(--dim)">${r.model_label}</span>`;
+  if($('#llmFix').checked && r.text) runCorrect(rid);
+  else autoCopyMaybe(r.text);
+}
+
+async function runCorrect(rid){
+  const cmd=$('#cmd'+rid), t=$('#cmdtxt'+rid), lbl=$('#cmdlbl'+rid);
+  if(!cmd) return;
+  cmd.classList.remove('empty'); t.textContent='✨ cleaning up…'; lbl.textContent='command';
+  const r=await api('/api/correct',{recording_id:rid, context:$('#ctx').value});
+  if(r.error){ t.textContent=''; cmd.classList.add('empty'); $('#meta'+rid).innerHTML+=` · <span class="err">fixup: ${escapeHtml(r.error)}</span>`; if(r.state) renderLlm(r); return; }
+  renderLlm(r);   // the correction may have just loaded the model
+  t.textContent = r.corrected || '(empty)';
+  lbl.textContent = `command · fixup ${r.latency_s}s · ${(r.model||'').split('/').pop()}`;
+  autoCopyMaybe(r.corrected);
+}
+function copyCmd(rid){
+  const c=$('#cmdtxt'+rid).textContent.trim();
+  navigator.clipboard.writeText(c || $('#txt'+rid).textContent);
+}
+async function autoCopyMaybe(text){ if($('#autoCopy').checked && text && text.trim()) await api('/api/clipboard',{text}); }
+
+// ── global push-to-talk dictation ──
+let dictOn=false;
+function setDictUI(){ const b=$('#dictBtn'); b.textContent = dictOn?'● Dictation ON — disable':'⌨︎ Enable global dictation'; b.classList.toggle('on',dictOn); }
+function dictConfigBody(){ return {hotkey:$('#hotkey').value, insert_mode:$('#insertMode').value,
+  model:$('#model').value, context:$('#ctx').value, fixup:$('#llmFix').checked,
+  device_index:parseInt($('#device').value), ...capBody()}; }
+// Push a config-only change to the server (enabled omitted → dictation state
+// unchanged). The server is the single source of truth; the menubar reflects it.
+// Send ONLY the field(s) the user just changed: posting the whole form would
+// write this page's possibly-stale view of every other field back, reverting a
+// change another client (the menubar, a second tab) made since our last poll.
+async function pushConfig(fields){ try{ await api('/api/dictation', fields); }catch(e){} }
+// Render the server's live config into the controls (skip a control the user is
+// editing; setting .value/.checked programmatically fires no change event → no loop).
+function syncFromServer(c){
+  if(!c) return;
+  // A <select> can only show values it has an option for; assigning anything else
+  // blanks it. A hotkey chord set elsewhere (the menubar, the API) gets an option
+  // added; a model or device this machine doesn't offer is left alone.
+  const set=(sel,v,addMissing)=>{ const el=$(sel);
+    if(!el || document.activeElement===el || v==null || String(el.value)===String(v)) return;
+    if(el.tagName==='SELECT' && ![...el.options].some(o=>o.value===String(v))){
+      if(!addMissing) return;
+      const o=document.createElement('option'); o.value=String(v); o.textContent=`hold ${v}`; el.appendChild(o);
+    }
+    el.value=String(v); };
+  set('#model', c.model); updateModelNote();
+  set('#device', c.device);
+  set('#hotkey', c.hotkey, true); set('#insertMode', c.insert_mode); set('#fusionMode', c.fusion_mode);
+  const ctx=$('#ctx'); if(ctx && document.activeElement!==ctx && c.context!=null && ctx.value!==c.context) ctx.value=c.context;
+  const fx=$('#llmFix'); if(fx && document.activeElement!==fx && typeof c.fixup==='boolean') fx.checked=c.fixup;
+  const dm=$('#dualMic'); if(dm && document.activeElement!==dm && c.channels!=null) dm.checked=(c.channels>=2);
+  updateDualMicAvail();
+  if(typeof c.enabled==='boolean' && c.enabled!==dictOn){ dictOn=c.enabled; setDictUI(); }
+}
+async function configLoop(){   // reflect config changes made elsewhere (e.g. the menubar)
+  try{ syncFromServer(await api('/api/dictation/status')); }catch(e){}
+  setTimeout(configLoop, 1000);
+}
+async function toggleDict(){
+  if(dictOn){ await api('/api/dictation',{enabled:false}); dictOn=false; setDictUI(); $('#dictStatus').textContent='off'; return; }
+  const r=await api('/api/dictation',{enabled:true});   // the server already holds the config
+  if(r.error){ $('#dictStatus').innerHTML=`<span style="color:var(--bad)">${escapeHtml(r.error)}</span>`; return; }
+  dictOn=true; setDictUI(); refreshFixup();
+}
+async function applyDictConfig(fields){ await pushConfig(fields); refreshFixup(); }   // config-only push (server-authoritative)
+let permsApplicable=true;   // set from /api/perms; false on Windows/Linux
+async function checkPerms(){
+  try {
+    const p=await api('/api/perms');
+    permsApplicable = !(p && p.applicable===false);
+    if(!permsApplicable){ $('#permStatus').textContent = p.note || 'permissions — not required on this OS'; return p; }
+    const badge=v=> v===true?'<span style="color:var(--accent)">granted ✓</span>'
+      : v===false?'<span style="color:var(--bad)">not granted ✗</span>':'<span style="color:var(--dim)">unknown</span>';
+    $('#permStatus').innerHTML = `permissions — Input Monitoring: ${badge(p.input_monitoring)} · Accessibility: ${badge(p.accessibility)}`;
+    return p;
+  } catch(e){ $('#permStatus').textContent='permissions: (server not reachable)'; }
+}
+
+function copyText(rid){ navigator.clipboard.writeText($('#txt'+rid).textContent); }
+async function del(rid){ await fetch('/api/recordings/'+rid,{method:'DELETE'}); renderList(); }
+async function clearAll(){ const d=await api('/api/recordings'); for(const r of d.recordings){ await fetch('/api/recordings/'+r.id,{method:'DELETE'}); } renderList(); }
+function escapeHtml(s){ return String(s ?? '').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// hold-to-talk (pointer + keyboard)
+const talk=$('#talk');
+talk.addEventListener('pointerdown',e=>{e.preventDefault();startRec();});
+talk.addEventListener('pointerup',stopRec);
+talk.addEventListener('pointerleave',()=>{if(recording)stopRec();});
+window.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&document.activeElement.tagName!=='SELECT'){e.preventDefault();startRec();}});
+window.addEventListener('keyup',e=>{if(e.code==='Space'){e.preventDefault();stopRec();}});
+$('#devRefresh').addEventListener('click',loadDevices);
+$('#clearAll').addEventListener('click',clearAll);
+$('#armBtn').addEventListener('click',toggleArm);
+$('#idle').addEventListener('change',()=>{ LS.set('stt.idle',$('#idle').value); api('/api/mic/idle',{idle_timeout:parseInt($('#idle').value)}); });
+$('#autoTx').addEventListener('change',()=>LS.set('stt.autoTx', $('#autoTx').checked?'1':'0'));
+
+function restorePrefs(){
+  const idle=LS.get('stt.idle',null);
+  if(idle!=null && [...$('#idle').options].some(o=>o.value===idle)){ $('#idle').value=idle; api('/api/mic/idle',{idle_timeout:parseInt(idle)}); }
+  $('#autoTx').checked = LS.get('stt.autoTx','1')==='1';
+  $('#ctx').value = LS.get('stt.ctx','');
+  $('#llmFix').checked = LS.get('stt.llmFix','0')==='1';
+  $('#autoCopy').checked = LS.get('stt.autoCopy','0')==='1';
+  $('#dualMic').checked = LS.get('stt.dualMic','0')==='1';
+  const fm=LS.get('stt.fusionMode',null); if(fm && [...$('#fusionMode').options].some(o=>o.value===fm)) $('#fusionMode').value=fm;
+  updateDualMicAvail();
+  const hk=LS.get('stt.hotkey',null); if(hk && [...$('#hotkey').options].some(o=>o.value===hk)) $('#hotkey').value=hk;
+  const im=LS.get('stt.insertMode',null); if(im && [...$('#insertMode').options].some(o=>o.value===im)) $('#insertMode').value=im;
+}
+$('#ctx')?.addEventListener('input',()=>LS.set('stt.ctx',$('#ctx').value));
+$('#ctx')?.addEventListener('change',()=>pushConfig({context:$('#ctx').value}));
+$('#llmFix')?.addEventListener('change',()=>{ LS.set('stt.llmFix',$('#llmFix').checked?'1':'0'); pushConfig({fixup:$('#llmFix').checked}).then(refreshFixup); });
+$('#autoCopy')?.addEventListener('change',()=>LS.set('stt.autoCopy',$('#autoCopy').checked?'1':'0'));
+$('#dualMic')?.addEventListener('change',()=>{ LS.set('stt.dualMic',$('#dualMic').checked?'1':'0'); updateDualMicAvail(); applyDictConfig({channels:capBody().channels}); if(armed) arm(); });
+$('#fusionMode')?.addEventListener('change',()=>{ LS.set('stt.fusionMode',$('#fusionMode').value); applyDictConfig({fusion_mode:$('#fusionMode').value}); if(armed) arm(); });
+$('#dictBtn')?.addEventListener('click',toggleDict);
+$('#hotkey')?.addEventListener('change',()=>{ LS.set('stt.hotkey',$('#hotkey').value); applyDictConfig({hotkey:$('#hotkey').value}); });
+$('#insertMode')?.addEventListener('change',()=>{ LS.set('stt.insertMode',$('#insertMode').value); applyDictConfig({insert_mode:$('#insertMode').value}); });
+$('#testPaste')?.addEventListener('click',async()=>{ const r=await api('/api/dictation/test',{}); $('#dictStatus').textContent=r.note||r.error||'testing…'; });
+$('#recheckPerms')?.addEventListener('click',checkPerms);
+$('#reqPerms')?.addEventListener('click',async()=>{ if(!permsApplicable){ await checkPerms(); return; } await api('/api/perms/request',{}); $('#permStatus').innerHTML='requested — approve the macOS prompt(s), enable both in System Settings → Privacy & Security, then restart the terminal app + <code>./run.sh</code>'; setTimeout(checkPerms,1500); });
+
+(async()=>{ await loadDevices(); restorePrefs();
+  const cfg=await api('/api/dictation/status').catch(()=>null);
+  if(cfg && cfg.configured) syncFromServer(cfg);   // adopt the shared config the menubar/server holds
+  else pushConfig(dictConfigBody());                // fresh: seed the server with our resolved defaults
+  configLoop();                                     // keep reflecting changes made elsewhere
+  setArmUI(); setDictUI(); renderList(); meterLoop(); pollBattery(); setInterval(pollBattery,30000); checkPerms(); })();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+recordings/
+*.wav
+.DS_Store
+.vscode/
+scripts/private-denylist.txt
+dist/
+build/
+*.egg-info/

@@ -1,0 +1,76 @@
+<!doctype html>
+<html data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- What a throat mic looks like, and how it is worn. An original drawing of the common
+     design, not of any one product. -->
+<svg width="800" height="420" viewBox="0 0 800 420" role="img"
+     aria-label="A throat mic, worn: a thin band around the neck holds two small round contact transducers against either side of the larynx. A cable runs down to a push-to-talk button and on to a plug.">
+  <defs>
+    <marker id="pt" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7"><circle cx="5" cy="5" r="3" class="dot"/></marker>
+    <clipPath id="panel"><rect x="8" y="8" width="420" height="404" rx="20"/></clipPath>
+  </defs>
+
+  <rect x="8" y="8" width="420" height="404" rx="20" class="panel"/>
+  <g clip-path="url(#panel)">
+    <!-- body: neck and shoulders -->
+    <path class="figure" d="M160,60 L160,236 C160,262 146,276 118,286 C74,300 30,318 -10,352 L-10,440
+             L446,440 L446,352 C406,318 362,300 318,286 C290,276 276,262 276,236 L276,60 Z"/>
+    <!-- a hint of the collarbones -->
+    <path class="crease" d="M168,316 C150,306 112,304 76,312"/>
+    <path class="crease" d="M268,316 C286,306 324,304 360,312"/>
+    <!-- head: lower face, jaw and chin (front view, cropped at the cheeks) -->
+    <path class="figure" d="M100,-20 L101,26 C103,62 114,86 136,106 C160,128 188,140 218,140
+             C248,140 276,128 300,106 C322,86 333,62 335,26 L336,-20 Z"/>
+    <path class="crease" d="M196,112 C208,118 228,118 240,112"/>
+    <!-- larynx and the vibration it makes -->
+    <path class="crease" d="M210,184 C212,172 224,172 226,184 C228,196 223,206 218,208 C213,206 208,196 210,184 Z"/>
+    <g class="t-stroke" fill="none" stroke-width="2.4" stroke-linecap="round">
+      <path d="M195,170 C187,180 187,198 195,208" opacity=".9"/>
+      <path d="M241,170 C249,180 249,198 241,208" opacity=".9"/>
+      <path d="M183,162 C171,176 171,202 183,216" opacity=".45"/>
+      <path d="M253,162 C265,176 265,202 253,216" opacity=".45"/>
+    </g>
+
+    <!-- the band and its two transducers -->
+    <path class="band" d="M160,226 C182,248 254,248 276,226"/>
+    <circle cx="190" cy="240" r="17" class="pod"/>
+    <circle cx="190" cy="240" r="6.5" class="t-fill"/>
+    <circle cx="246" cy="240" r="17" class="pod"/>
+    <circle cx="246" cy="240" r="6.5" class="t-fill"/>
+
+    <!-- cable -> push-to-talk -> plug -->
+    <path class="cable" d="M262,246 C292,262 304,300 322,330 C332,346 340,350 350,350"/>
+    <rect x="336" y="332" width="54" height="36" rx="10" class="device"/>
+    <circle cx="363" cy="350" r="9" class="t-fill"/>
+    <path class="cable" d="M390,350 C404,350 408,372 408,396 L408,420"/>
+  </g>
+  <rect x="8" y="8" width="420" height="404" rx="20" class="panel-edge"/>
+
+  <!-- callouts, top to bottom in the order of what they point at -->
+  <g font-size="14">
+    <path class="leader" d="M257,176 L470,70 L486,70" marker-start="url(#pt)"/>
+    <text x="494" y="64" class="ink" font-weight="600">It feels vibration, not sound</text>
+    <text x="494" y="84" class="muted">Room noise barely registers,</text>
+    <text x="494" y="103" class="muted">and a murmur is enough.</text>
+
+    <path class="leader" d="M264,240 L470,178 L486,178" marker-start="url(#pt)"/>
+    <text x="494" y="172" class="ink" font-weight="600">Two contact transducers</text>
+    <text x="494" y="192" class="muted">held by a thin band, one on each</text>
+    <text x="494" y="211" class="muted">side of your larynx</text>
+
+    <path class="leader" d="M392,338 L470,280 L486,280" marker-start="url(#pt)"/>
+    <text x="494" y="274" class="ink" font-weight="600">Push-to-talk button</text>
+    <text x="494" y="294" class="muted">on many models</text>
+
+    <path class="leader" d="M410,398 L470,370 L486,370" marker-start="url(#pt)"/>
+    <text x="494" y="364" class="ink" font-weight="600">Plugs in like any mic</text>
+    <text x="494" y="385" class="muted mono" font-size="13">3.5 mm · USB · Bluetooth</text>
+  </g>
+</svg>
+</body>
+</html>

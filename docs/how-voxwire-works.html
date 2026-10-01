@@ -1,0 +1,367 @@
+<title>Inside Voxwire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#f5f6f9; --surface:#ffffff; --surface-2:#eef1f5; --border:#d7dee7;
+    --ink:#13181e; --muted:#586372; --faint:#8b96a4;
+    --throat:#b9740f; --air:#0d8395; --fused:#6244e6;
+    --accent:var(--fused);
+    --serif:"Fraunces",Georgia,serif;
+    --sans:"IBM Plex Sans",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --maxw:720px; --gutter:22px;
+    --r:14px;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme:dark){
+      --bg:#0d1116; --surface:#151b22; --surface-2:#1b232c; --border:#28323d;
+      --ink:#e7edf3; --muted:#93a1b1; --faint:#6b7889;
+      --throat:#edac4c; --air:#49c4d6; --fused:#9d8dff;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1116; --surface:#151b22; --surface-2:#1b232c; --border:#28323d;
+    --ink:#e7edf3; --muted:#93a1b1; --faint:#6b7889;
+    --throat:#edac4c; --air:#49c4d6; --fused:#9d8dff;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding-inline:var(--gutter);padding-block:0 84px;}
+  section{margin-top:60px}
+  p{color:var(--ink);margin:0 0 16px;max-width:64ch}
+  .lead{font-size:19px;color:var(--muted)}
+  strong{font-weight:600}
+  a{color:var(--accent);text-underline-offset:3px}
+  .mono{font-family:var(--mono)}
+
+  /* eyebrows + headings */
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--faint);margin:0 0 14px}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(40px,8vw,64px);
+    line-height:1.02;letter-spacing:-.015em;margin:0;text-wrap:balance}
+  h2{font-family:var(--serif);font-weight:600;font-size:clamp(25px,4.4vw,33px);
+    line-height:1.12;letter-spacing:-.01em;margin:0 0 14px;text-wrap:balance}
+  h3{font-family:var(--sans);font-weight:600;font-size:16px;margin:0 0 6px}
+  .sec-num{font-family:var(--mono);font-size:12px;color:var(--accent);
+    letter-spacing:.1em;display:block;margin-bottom:8px}
+
+  /* hero */
+  header{padding-block:72px 8px;border-bottom:1px solid var(--border)}
+  header .lead{margin-top:22px;font-size:20px;max-width:56ch}
+  .pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+  .pill{font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;
+    border:1px solid var(--border);background:var(--surface);color:var(--muted)}
+
+  /* figures */
+  figure{margin:26px 0 8px}
+  .fig-scroll{overflow-x:auto}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:12px;max-width:60ch}
+  .swatch{display:inline-block;width:10px;height:10px;border-radius:3px;
+    vertical-align:middle;margin-right:5px}
+
+  /* SVG coloring via classes (presentation attributes can't read CSS vars) */
+  svg text{fill:currentColor}
+  .fS{fill:var(--surface)} .fS2{fill:var(--surface-2)} .fW{fill:#fff}
+  .fT{fill:var(--throat)} .fA{fill:var(--air)} .fF{fill:var(--fused)}
+  .fM{fill:var(--muted)} .fFa{fill:var(--faint)} .fInk{fill:currentColor}
+  .sB{stroke:var(--border)} .sC{stroke:currentColor}
+  .sT{stroke:var(--throat)} .sA{stroke:var(--air)} .sF{stroke:var(--fused)}
+  .dash{stroke-dasharray:4 4}
+
+  /* two-up cards (sync + build) */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-build{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
+  @media (max-width:560px){.grid2,.grid-build{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:20px}
+  .card h3{display:flex;align-items:center;gap:8px}
+  .card p{font-size:14.5px;color:var(--muted);margin:0}
+  .build{display:flex;gap:12px;align-items:flex-start;background:var(--surface);
+    border:1px solid var(--border);border-radius:12px;padding:15px 16px}
+  .build .k{font-family:var(--mono);font-size:12px;color:var(--fused);margin-top:2px}
+  .build h3{margin:0 0 3px;font-size:15px}
+  .build p{font-size:13.5px;color:var(--muted);margin:0}
+
+  /* callout */
+  .callout{background:var(--surface-2);border:1px solid var(--border);
+    border-left:3px solid var(--accent);border-radius:12px;padding:22px 24px}
+  .callout h2{margin-top:0}
+
+  footer{margin-top:72px;padding-top:26px;border-top:1px solid var(--border);
+    color:var(--faint);font-size:13.5px;font-family:var(--mono);
+    display:flex;flex-wrap:wrap;gap:6px 18px}
+
+  @media (prefers-reduced-motion:no-preference){
+    .pulse{animation:pulse 3.4s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Local-first voice agent · throat-mic native</p>
+    <h1>Inside&nbsp;Voxwire</h1>
+    <p class="lead">You murmur a command. Voxwire hears it on your own machine, works out
+      what you meant, and does the job — across the systems you connect. Here is how it
+      actually works, from your throat to the action, in plain terms.</p>
+    <div class="pillrow">
+      <span class="pill">on-device STT</span>
+      <span class="pill">throat + air fusion</span>
+      <span class="pill">no cloud required</span>
+      <span class="pill">you approve every risky action</span>
+    </div>
+  </header>
+
+  <!-- ═══ PIPELINE ═══ -->
+  <section>
+    <span class="sec-num">01 / THE WHOLE PATH</span>
+    <h2>From a murmur to an action</h2>
+    <p>Nothing has to leave your computer. Your voice is captured, cleaned up, turned into
+      text on-device, matched to something Voxwire knows how to do, and then — if that
+      action could change anything — it stops and waits for you to say yes.</p>
+
+    <figure>
+      <svg viewBox="0 0 380 470" role="img" aria-label="Voxwire pipeline: microphones to fusion to on-device transcription to optional faithful cleanup to the plugin gateway, with a confirmation gate guarding actions on your systems." style="color:var(--ink)">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="fInk"/>
+          </marker>
+          <marker id="ahAcc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="fF"/>
+          </marker>
+        </defs>
+        <g font-family="IBM Plex Sans, sans-serif">
+          <!-- 1 mics -->
+          <rect x="70" y="14" width="240" height="52" rx="11" class="fS sB"/>
+          <text x="190" y="36" text-anchor="middle" font-size="14" font-weight="600">Throat mic + air mic</text>
+          <text x="190" y="54" text-anchor="middle" font-size="11.5" class="fM">quiet, noise-immune · plus the consonants</text>
+
+          <line x1="190" y1="66" x2="190" y2="88" class="sC" stroke-width="1.5" marker-end="url(#ah)"/>
+          <text x="198" y="81" font-size="10.5" font-family="IBM Plex Mono, monospace" class="fM">capture</text>
+
+          <!-- 2 fuse -->
+          <rect x="70" y="90" width="240" height="52" rx="11" class="fS sF"/>
+          <text x="190" y="112" text-anchor="middle" font-size="14" font-weight="600">Fuse the two mics</text>
+          <text x="190" y="130" text-anchor="middle" font-size="11.5" class="fM">throat lows + air consonants → one signal</text>
+
+          <line x1="190" y1="142" x2="190" y2="164" class="sC" stroke-width="1.5" marker-end="url(#ah)"/>
+          <text x="198" y="157" font-size="10.5" font-family="IBM Plex Mono, monospace" class="fM">16 kHz mono</text>
+
+          <!-- 3 stt -->
+          <rect x="70" y="166" width="240" height="52" rx="11" class="fS sB"/>
+          <text x="190" y="188" text-anchor="middle" font-size="14" font-weight="600">Transcribe on-device</text>
+          <text x="190" y="206" text-anchor="middle" font-size="11.5" class="fM">MLX / faster-whisper · audio stays local</text>
+
+          <line x1="190" y1="218" x2="190" y2="240" class="sC" stroke-width="1.5" marker-end="url(#ah)"/>
+          <text x="198" y="233" font-size="10.5" font-family="IBM Plex Mono, monospace" class="fM">transcript</text>
+
+          <!-- 4 fixup -->
+          <rect x="70" y="242" width="240" height="52" rx="11" class="fS sB dash"/>
+          <text x="190" y="264" text-anchor="middle" font-size="14" font-weight="600">Faithful cleanup <tspan font-size="11" font-weight="400" class="fFa">(optional)</tspan></text>
+          <text x="190" y="282" text-anchor="middle" font-size="11.5" class="fM">fixes mishearings only — never invents</text>
+
+          <line x1="190" y1="294" x2="190" y2="316" class="sC" stroke-width="1.5" marker-end="url(#ah)"/>
+          <text x="198" y="309" font-size="10.5" font-family="IBM Plex Mono, monospace" class="fM">cleaned text</text>
+
+          <!-- 5 gateway -->
+          <rect x="70" y="318" width="240" height="52" rx="11" class="fS sB"/>
+          <text x="190" y="340" text-anchor="middle" font-size="14" font-weight="600">Route to an integration</text>
+          <text x="190" y="358" text-anchor="middle" font-size="11.5" class="fM">plugins you connect — nothing hardcoded</text>
+
+          <!-- gated arrow -->
+          <line x1="190" y1="370" x2="190" y2="404" class="sF" stroke-width="2" marker-end="url(#ahAcc)"/>
+          <rect x="214" y="376" width="150" height="22" rx="6" class="fS2 sF"/>
+          <text x="289" y="391" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace" class="fF">you approve first</text>
+
+          <!-- 6 systems -->
+          <rect x="70" y="406" width="240" height="50" rx="11" class="fF sF"/>
+          <text x="190" y="436" text-anchor="middle" font-size="14.5" font-weight="600" class="fW">Your systems &amp; tools</text>
+        </g>
+      </svg>
+      <figcaption>The pipeline is one direction, top to bottom. Everything above “your systems”
+        runs on your machine; the last step is guarded, so an action that could change something
+        never happens without you.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ═══ PROBLEM ═══ -->
+  <section>
+    <span class="sec-num">02 / THE CATCH</span>
+    <h2>Why a throat mic needs a partner</h2>
+    <p>A <strong>throat mic</strong> rests on your neck and reads your vocal cords through
+      your skin. That is what makes it magic: it ignores room noise and works when you
+      barely make a sound. But it is <strong>band-limited</strong> — it captures the low
+      “voicing” that carries your vowels and <strong>drops the high-frequency consonants</strong>
+      (s, f, t, k, sh) that speech recognition leans on hardest.</p>
+    <p>An ordinary <strong>air mic</strong> is the mirror image: it hears those consonants
+      crisply — but it also hears the whole room. Neither mic alone is enough. The trick is
+      to use each for the half it is good at.</p>
+  </section>
+
+  <!-- ═══ FUSION (the star) ═══ -->
+  <section>
+    <span class="sec-num">03 / THE IDEA</span>
+    <h2>Dual-mic fusion</h2>
+    <p>Voxwire records <strong>both mics at once</strong> and combines them before
+      transcribing. It splits the sound at a crossover around <span class="mono">900&nbsp;Hz</span>:
+      keep the <span style="color:var(--throat)"><strong>throat</strong></span> below it
+      (clean, noise-immune voicing) and borrow the
+      <span style="color:var(--air)"><strong>air mic</strong></span> above it (the consonants) —
+      but only <em>while the throat says you are actually speaking</em>, so the air mic’s
+      room noise stays out of the pauses around what you say. The gate holds open through the
+      short gaps between words, so there the room comes through.</p>
+
+    <figure>
+      <div class="fig-scroll">
+      <svg viewBox="0 0 760 340" role="img" aria-label="Fusion mechanism: the throat mic supplies the band below 900 Hz, the air mic supplies the band above 900 Hz through a voicing gate, and the two are merged into one fused signal sent to speech-to-text." style="color:var(--ink);min-width:600px">
+        <defs>
+          <marker id="mkC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fInk"/></marker>
+          <marker id="mkT" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fT"/></marker>
+          <marker id="mkA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fA"/></marker>
+          <marker id="mkF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fF"/></marker>
+        </defs>
+        <g font-family="IBM Plex Sans, sans-serif">
+          <!-- THROAT source -->
+          <rect x="16" y="40" width="150" height="66" rx="11" class="fS sT"/>
+          <text x="91" y="66" text-anchor="middle" font-size="14" font-weight="600">Throat mic</text>
+          <g class="fT">
+            <rect x="34" y="80" width="10" height="16"/>
+            <rect x="47" y="84" width="10" height="12"/>
+            <rect x="60" y="88" width="10" height="8" opacity=".7"/>
+            <rect x="73" y="92" width="10" height="4" opacity=".4"/>
+            <rect x="86" y="94" width="10" height="2" opacity=".25"/>
+          </g>
+          <text x="114" y="93" font-size="10" font-family="IBM Plex Mono, monospace" class="fM">low</text>
+
+          <!-- AIR source -->
+          <rect x="16" y="234" width="150" height="66" rx="11" class="fS sA"/>
+          <text x="91" y="260" text-anchor="middle" font-size="14" font-weight="600">Air mic</text>
+          <g class="fA">
+            <rect x="34" y="278" width="10" height="14" opacity=".85"/>
+            <rect x="47" y="276" width="10" height="16" opacity=".85"/>
+            <rect x="60" y="280" width="10" height="12"/>
+            <rect x="73" y="278" width="10" height="14"/>
+            <rect x="86" y="282" width="10" height="10"/>
+            <rect x="99" y="279" width="10" height="13"/>
+          </g>
+          <text x="118" y="290" font-size="10" font-family="IBM Plex Mono, monospace" class="fM">wide</text>
+
+          <!-- THROAT low-band arrow -->
+          <path d="M166,73 C250,73 262,150 328,160" fill="none" class="sT" stroke-width="2.5" marker-end="url(#mkT)"/>
+          <text x="196" y="44" font-size="11.5" font-weight="500" class="fT">lows · 0–900 Hz</text>
+          <text x="196" y="59" font-size="10.5" class="fM">voicing, noise-immune</text>
+
+          <!-- voicing gate on air path -->
+          <rect x="196" y="246" width="118" height="44" rx="9" class="fS2 sA"/>
+          <text x="255" y="264" text-anchor="middle" font-size="11.5" font-weight="600">voicing gate</text>
+          <text x="255" y="280" text-anchor="middle" font-size="10" class="fM">open while you speak</text>
+          <line x1="166" y1="268" x2="196" y2="268" class="sA" stroke-width="2.5" marker-end="url(#mkA)"/>
+          <path d="M314,256 C362,242 300,186 330,176" fill="none" class="sA" stroke-width="2.5" marker-end="url(#mkA)"/>
+          <text x="360" y="238" font-size="11.5" font-weight="500" class="fA">highs · &gt;900 Hz</text>
+          <text x="360" y="254" font-size="10.5" class="fM">consonants s f t k sh</text>
+
+          <!-- MERGE node -->
+          <circle cx="356" cy="168" r="24" class="fS sF" stroke-width="2"/>
+          <text x="356" y="176" text-anchor="middle" font-size="22" font-weight="600" class="fF">+</text>
+          <text x="425" y="158" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace" class="fM">≈900 Hz split</text>
+
+          <!-- merge -> fused -->
+          <line x1="380" y1="168" x2="470" y2="168" class="sF" stroke-width="2.5" marker-end="url(#mkF)"/>
+
+          <!-- FUSED result -->
+          <rect x="474" y="128" width="180" height="80" rx="12" class="fS sF" stroke-width="2"/>
+          <text x="564" y="152" text-anchor="middle" font-size="14.5" font-weight="600">Fused signal</text>
+          <rect x="494" y="176" width="11" height="16" class="fT"/>
+          <rect x="508" y="180" width="11" height="12" class="fT" opacity=".8"/>
+          <rect x="522" y="182" width="11" height="10" class="fT" opacity=".55"/>
+          <rect x="536" y="180" width="11" height="12" class="fF" opacity=".7"/>
+          <rect x="550" y="177" width="11" height="15" class="fF"/>
+          <rect x="564" y="179" width="11" height="13" class="fF"/>
+          <rect x="578" y="181" width="11" height="11" class="fF" opacity=".8"/>
+          <rect x="592" y="178" width="11" height="14" class="fF"/>
+          <rect x="606" y="182" width="11" height="10" class="fF" opacity=".7"/>
+          <rect x="620" y="180" width="11" height="12" class="fF" opacity=".85"/>
+
+          <line x1="654" y1="168" x2="712" y2="168" class="sC" stroke-width="1.5" marker-end="url(#mkC)"/>
+          <text x="683" y="160" text-anchor="middle" font-size="10.5" font-family="IBM Plex Mono, monospace" class="fM">to STT</text>
+        </g>
+      </svg>
+      </div>
+      <figcaption>
+        <span class="swatch" style="background:var(--throat)"></span>throat (lows) ·
+        <span class="swatch" style="background:var(--air)"></span>air (highs, gated) ·
+        <span class="swatch" style="background:var(--fused)"></span>fused — the throat carries the
+        low band that noise can’t touch, the air mic fills in the consonants above the crossover,
+        and the fused signal has both. Three modes ship: <strong>fusion</strong> (shown),
+        <strong>throat-only</strong> (stealth), and <strong>air-only</strong>.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ═══ SYNC ═══ -->
+  <section>
+    <span class="sec-num">04 / THE HARD PART</span>
+    <h2>Keeping the two mics in step</h2>
+    <p>Two microphones only fuse cleanly if their recordings line up in time. There are two
+      ways to get there — one solves it in hardware, the other in software.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3><span class="swatch" style="background:var(--fused)"></span>One 2-channel device</h3>
+        <p>A stereo interface or a macOS <em>Aggregate Device</em> records throat and air on a
+          single shared clock — so the two channels are <strong>sample-aligned for free</strong>,
+          with no drift. This is Voxwire’s preferred path, and it’s the “one tiny board, two
+          conductors” idea taken to its cleanest form.</p>
+      </div>
+      <div class="card">
+        <h3><span class="swatch" style="background:var(--air)"></span>Two separate devices</h3>
+        <p>Two independent mics start a few milliseconds apart. Voxwire lines them up in software
+          by <strong>cross-correlating their shared voicing envelope</strong> — accurate to about
+          a millisecond, more than enough for short push-to-talk commands. (Only long, continuous
+          streams drift enough to need re-aligning.)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ WHAT WE BUILT ═══ -->
+  <section>
+    <span class="sec-num">05 / WHAT’S BUILT</span>
+    <h2>What's built</h2>
+    <p>The fusion engine and its capture path are implemented and tested; the surrounding
+      system is what carries a murmur all the way to a result.</p>
+    <div class="grid-build">
+      <div class="build"><span class="k">DSP</span><div><h3>Fusion engine</h3><p>Band-merge + voicing gate + time-alignment, covered by unit tests on synthetic signals.</p></div></div>
+      <div class="build"><span class="k">I/O</span><div><h3>Aligned capture</h3><p>Sample-aligned 2-channel capture, with a clean fall-back to a single mic.</p></div></div>
+      <div class="build"><span class="k">LLM</span><div><h3>Zero-config cleanup</h3><p>Picks the best on-device model automatically; stays faithful and off by default.</p></div></div>
+      <div class="build"><span class="k">UI</span><div><h3>Simplified console</h3><p>The daily controls up front; model, context, and fusion tucked into Advanced.</p></div></div>
+      <div class="build"><span class="k">SVC</span><div><h3>Always-on (macOS)</h3><p>Runs at login via launchd — arm the mic whenever, no terminal needed.</p></div></div>
+      <div class="build"><span class="k">STT</span><div><h3>Pluggable + local</h3><p>MLX on Apple Silicon, faster-whisper elsewhere; your audio needn’t leave the machine.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECURITY ═══ -->
+  <section>
+    <div class="callout">
+      <h2>It can act — so it asks first</h2>
+      <p style="max-width:60ch">A microphone that can run commands is a real attack surface: anyone
+        who can speak near it, or slip text into the agent, is trying to drive your machine. So the
+        power to approve a destructive action lives with the <strong>executor, not the agent</strong> —
+        a native dialog the agent cannot click for itself, denied by default. Voxwire is dictation-first
+        today; tools stay off, host by host, until you grant them.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Voxwire</span><span>·</span>
+    <span>local-first</span><span>·</span>
+    <span>throat-mic native</span><span>·</span>
+    <span>MIT</span><span>·</span>
+    <span class="pulse">early software</span>
+  </footer>
+
+</div>

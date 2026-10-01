@@ -1,0 +1,136 @@
+<!doctype html>
+<html data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- README banner: murmur into a throat mic, two mics fused, transcribed locally, typed at
+     your cursor. The waves are drawn by the script below: the throat wave has the voice but
+     not the hiss of the "s"; the air wave has the hiss and the room; the fused wave has the
+     voice and the hiss, and the room only while you speak: none before or after. -->
+<svg width="1060" height="296" viewBox="0 0 1060 296" role="img"
+     aria-label="You murmur into a throat mic. Its signal and an ordinary air mic's are fused into one, transcribed on your machine, and the text is typed where your cursor is.">
+  <defs>
+    <clipPath id="panel"><rect x="8" y="8" width="252" height="242" rx="16"/></clipPath>
+    <marker id="head-f" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5,1.5 L7.5,5 L1.5,8.5" class="arrow f-stroke"/></marker>
+    <marker id="head-m" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1.5,1.5 L7.5,5 L1.5,8.5" class="arrow m-stroke"/></marker>
+  </defs>
+
+  <!-- 1. you, wearing the throat mic (the throat-mic.html figure at 0.6 scale) -->
+  <rect x="8" y="8" width="252" height="242" rx="16" class="panel"/>
+  <g clip-path="url(#panel)">
+    <g transform="translate(8,8) scale(0.6) translate(-8,-8)" class="scaled">
+      <path class="figure" d="M160,60 L160,236 C160,262 146,276 118,286 C74,300 30,318 -10,352 L-10,440
+               L446,440 L446,352 C406,318 362,300 318,286 C290,276 276,262 276,236 L276,60 Z"/>
+      <path class="crease" d="M168,316 C150,306 112,304 76,312"/>
+      <path class="crease" d="M268,316 C286,306 324,304 360,312"/>
+      <path class="figure" d="M100,-20 L101,26 C103,62 114,86 136,106 C160,128 188,140 218,140
+               C248,140 276,128 300,106 C322,86 333,62 335,26 L336,-20 Z"/>
+      <path class="crease" d="M196,112 C208,118 228,118 240,112"/>
+      <path class="crease" d="M210,184 C212,172 224,172 226,184 C228,196 223,206 218,208 C213,206 208,196 210,184 Z"/>
+      <g class="t-stroke" fill="none" stroke-width="2.2" stroke-linecap="round">
+        <path d="M195,170 C187,180 187,198 195,208" opacity=".9"/>
+        <path d="M241,170 C249,180 249,198 241,208" opacity=".9"/>
+        <path d="M183,162 C171,176 171,202 183,216" opacity=".45"/>
+        <path d="M253,162 C265,176 265,202 253,216" opacity=".45"/>
+      </g>
+      <path class="cable" d="M262,246 C290,262 298,302 318,324 C334,342 360,348 460,348"/>
+      <path class="band" d="M160,226 C182,248 254,248 276,226"/>
+      <circle cx="190" cy="240" r="17" class="pod"/>
+      <circle cx="190" cy="240" r="6.5" class="t-fill"/>
+      <circle cx="246" cy="240" r="17" class="pod"/>
+      <circle cx="246" cy="240" r="6.5" class="t-fill"/>
+    </g>
+  </g>
+  <rect x="8" y="8" width="252" height="242" rx="16" class="panel-edge"/>
+
+  <!-- 2. two mics, fused -->
+  <g font-size="14">
+    <path d="M260,212 L308,212" class="cable"/>
+    <text x="308" y="182" class="t-fill" font-weight="600">throat mic</text>
+    <path id="w-throat" class="wave t-stroke"/>
+    <g class="a-stroke" fill="none" stroke-width="2" stroke-linecap="round" transform="translate(286,110)">
+      <rect x="-6" y="-15" width="12" height="20" rx="6" class="a-soft"/>
+      <path d="M-10,-2 C-10,12 10,12 10,-2 M0,9 L0,16 M-6,16 L6,16"/>
+    </g>
+    <text x="308" y="82" class="a-fill" font-weight="600">air mic</text>
+    <path id="w-air" class="wave a-stroke"/>
+  </g>
+  <path d="M452,112 C470,112 474,140 486,146" class="arrow a-stroke" opacity=".85"/>
+  <path d="M452,212 C470,212 474,184 486,178" class="arrow t-stroke" opacity=".85"/>
+  <circle cx="506" cy="162" r="22" class="f-soft f-stroke" stroke-width="2.5"/>
+  <path d="M495,155 C502,155 503,162 512,162 M495,169 C502,169 503,162 512,162 M512,162 L518,162"
+        class="arrow f-stroke" stroke-width="2.2"/>
+  <path id="w-fused" class="wave f-stroke"/>
+  <path d="M676,162 L696,162" class="arrow f-stroke" marker-end="url(#head-f)"/>
+
+  <!-- 3. transcribed on your machine -->
+  <rect x="704" y="126" width="120" height="72" rx="12" class="card"/>
+  <g transform="translate(724,162)" class="m-stroke" fill="none" stroke-width="1.8" stroke-linecap="round">
+    <rect x="-9" y="-9" width="18" height="18" rx="3"/>
+    <path d="M-4,-9 L-4,-13 M0,-9 L0,-13 M4,-9 L4,-13 M-4,9 L-4,13 M0,9 L0,13 M4,9 L4,13
+             M-9,-4 L-13,-4 M-9,0 L-13,0 M-9,4 L-13,4 M9,-4 L13,-4 M9,0 L13,0 M9,4 L13,4"/>
+  </g>
+  <text x="746" y="157" font-size="14" class="ink" font-weight="600">speech</text>
+  <text x="746" y="175" font-size="14" class="ink" font-weight="600">to text</text>
+  <path d="M824,162 L844,162" class="arrow m-stroke" marker-end="url(#head-m)"/>
+
+  <!-- 4. typed at your cursor -->
+  <rect x="852" y="90" width="200" height="144" rx="12" class="card"/>
+  <path d="M852,116 L852,102 A12,12 0 0 1 864,90 L1040,90 A12,12 0 0 1 1052,102 L1052,116 Z" class="card-2"/>
+  <circle cx="870" cy="103" r="4.5" fill="#ff5f57"/>
+  <circle cx="885" cy="103" r="4.5" fill="#febc2e"/>
+  <circle cx="900" cy="103" r="4.5" fill="#28c840"/>
+  <g font-size="15" class="mono ink">
+    <text x="870" y="148">please stop the</text>
+    <text x="870" y="172">test<tspan class="f-fill" font-weight="500">s</tspan> and list</text>
+    <text x="870" y="196">the files</text>
+  </g>
+  <rect x="953" y="182" width="2.5" height="18" rx="1" class="f-fill"/>
+
+  <!-- stage labels -->
+  <g font-size="16" class="muted" text-anchor="middle">
+    <text x="134" y="284">You murmur</text>
+    <text x="480" y="284">Two mics, fused</text>
+    <text x="764" y="284">On your machine</text>
+    <text x="952" y="284">At your cursor</text>
+  </g>
+
+  <script>
+  // Syllable-shaped bursts. The throat wave is voice only; the air wave adds the "s" hiss
+  // (between the second and third syllables) and a room-noise floor; the fused wave keeps
+  // the voice and the hiss, and the room's highs only while the gate is open. The gate
+  // bridges the gaps between words (voxwire/fusion.py holds it 150 ms before voicing and
+  // 200 ms after), so it is open across the phrase and closed before and after it.
+  function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const bump = (u, c, w) => Math.exp(-(((u - c) / w) ** 2));
+  const voice = u => bump(u, .2, .06) + bump(u, .37, .065) + bump(u, .63, .06) + bump(u, .8, .065);
+  const hiss = u => bump(u, .5, .03);
+  const ramp = x => Math.min(1, Math.max(0, x));
+  const gate = u => ramp((u - .08) / .05) * ramp((.93 - u) / .05);
+  function wave(id, x0, x1, y, amp, kind) {
+    const n = x1 - x0, noise = rng(11), room = rng(29);
+    let d = "";
+    for (let i = 0; i <= n; i++) {
+      const u = i / n, e = voice(u), h = hiss(u) * (noise() * 2 - 1), r = room() * 2 - 1;
+      const lo = Math.sin(i / 13 * 2 * Math.PI), hi = Math.sin(i / 3.9 * 2 * Math.PI + 1);
+      let v = 0;
+      if (kind === "throat") v = e * lo;
+      if (kind === "air") v = e * (.72 * lo + .3 * hi) + .95 * h + .17 * r;
+      if (kind === "fused") v = e * (.78 * lo + .28 * hi) + .95 * h + .12 * gate(u) * r;
+      d += (i ? "L" : "M") + (x0 + i).toFixed(1) + "," + (y - amp * v).toFixed(1);
+    }
+    document.getElementById(id).setAttribute("d", d);
+  }
+  wave("w-throat", 308, 452, 212, 17, "throat");
+  wave("w-air", 308, 452, 112, 17, "air");
+  wave("w-fused", 528, 672, 162, 17, "fused");
+  </script>
+</svg>
+</body>
+</html>

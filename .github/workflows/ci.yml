@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Every job runs on a GitHub-hosted runner, never a self-hosted one. A pull
+# request's workflow comes from the pull request itself, so a fork can rewrite
+# `runs-on`: any self-hosted runner registered to this repo would run a
+# stranger's code. GitHub-hosted runners are throwaway VMs, and free for public
+# repositories.
+#
+# Each job runs in a python:3.12-slim container, so CI and a contributor's
+# `docker run python:3.12-slim` see the same environment.
+
+jobs:
+  lint-test:
+    name: lint + test
+    runs-on: ubuntu-latest
+    container: python:3.12-slim
+    steps:
+      # server.py imports sounddevice at load, and sounddevice needs the PortAudio
+      # shared library, which the base image does not ship. Without it every test
+      # that imports the server errors at collection (OSError, which
+      # pytest.importorskip does not catch). git: a real checkout for leakcheck.
+      # gcc + headers: pynput pulls in evdev on Linux, which builds from source.
+      - name: System packages (PortAudio for sounddevice, git, evdev build deps)
+        run: apt-get update && apt-get install -y --no-install-recommends libportaudio2 git gcc libc6-dev linux-libc-dev
+
+      - uses: actions/checkout@v4
+
+      # Cross-platform path: core + the faster-whisper STT backend + dev tools.
+      # MLX/rumps are Apple-Silicon/macOS-only (no wheels here), so they're excluded.
+      - name: Install (core + faster-whisper + dev)
+        run: python -m pip install -e ".[dev,faster-whisper]"
+
+      - name: Ruff (lint)
+        run: ruff check .
+
+      - name: Pytest
+        run: python -m pytest -q
+
+      - name: Leak check (secret-shaped patterns)
+        run: ./scripts/leakcheck.sh
+
+  secret-scan:
+    name: secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    container: python:3.12-slim
+    steps:
+      - name: System packages (curl, git)
+        run: apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git
+
+      - uses: actions/checkout@v4
+
+      # Pinned binary rather than the marketplace action, which gates on an
+      # org license; the binary is license-free and works on private repos.
+      - name: Install gitleaks
+        run: |
+          VERSION=8.18.4
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      # Scans the working tree only, so green CI does NOT mean the history is
+      # safe to publish. The history gate is `./scripts/leakcheck.sh --history`
+      # (run locally, with the maintainer denylist) plus the manual
+      # history-audit workflow — both must be clean before any visibility flip.
+      - name: Gitleaks (working tree)
+        run: gitleaks detect --no-git --redact --verbose

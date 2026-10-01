@@ -1,0 +1,52 @@
+/* Shared look for the README illustrations: the tokens of docs/how-voxwire-works.html.
+   make_images.py renders every src/*.html once per theme (data-theme="light"|"dark"). */
+:root {
+  --bg: #ffffff; --surface: #ffffff; --surface-2: #eef1f5; --border: #d0d7de;
+  --ink: #1f2328; --muted: #59636e; --faint: #9aa4b0;
+  --throat: #b9740f; --throat-soft: #f6e3c4; --air: #0d8395; --air-soft: #cdeef1;
+  --fused: #6244e6; --fused-soft: #e6e1fc; --band: #2d333b; --good: #1a7f4b;
+  --panel: #eef1f5; --figure: #fbfcfd; --figure-line: #b8c0ca;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --surface: #151b22; --surface-2: #1b232c; --border: #30363d;
+  --ink: #e6edf3; --muted: #9198a1; --faint: #5b6470;
+  --throat: #edac4c; --throat-soft: #3a2a12; --air: #49c4d6; --air-soft: #0f3036;
+  --fused: #9d8dff; --fused-soft: #262048; --band: #c9d1d9; --good: #43c98a;
+  --panel: #151b22; --figure: #222b36; --figure-line: #3d4855;
+}
+html, body { margin: 0; background: transparent; }
+svg { display: block; font-family: var(--sans); }
+.ink { fill: var(--ink); } .muted { fill: var(--muted); }
+.mono { font-family: var(--mono); }
+.panel { fill: var(--panel); }
+.panel-edge { fill: none; stroke: var(--border); stroke-width: 1.5; }
+.figure { fill: var(--figure); stroke: var(--figure-line); stroke-width: 2; stroke-linejoin: round; }
+.crease { fill: none; stroke: var(--figure-line); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pod { fill: var(--throat-soft); stroke: var(--throat); stroke-width: 3.5; }
+.device { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+.leader { fill: none; stroke: var(--faint); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.dot { fill: var(--faint); }
+.card { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+.card-2 { fill: var(--surface-2); stroke: var(--border); stroke-width: 1.5; }
+.t-fill { fill: var(--throat); } .t-stroke { stroke: var(--throat); }
+.a-fill { fill: var(--air); } .a-soft { fill: var(--air-soft); } .a-stroke { stroke: var(--air); }
+.f-fill { fill: var(--fused); } .f-soft { fill: var(--fused-soft); } .f-stroke { stroke: var(--fused); }
+.band { fill: none; stroke: var(--band); stroke-width: 9; stroke-linecap: round; }
+.cable { fill: none; stroke: var(--muted); stroke-width: 3; stroke-linecap: round; }
+.m-stroke { stroke: var(--muted); }
+.wave { fill: none; stroke-width: 1.6; stroke-linejoin: round; }
+.scaled * { vector-effect: non-scaling-stroke; }
+.scaled .band { stroke-width: 7; }
+.scaled .pod { stroke-width: 2.5; }
+.link { fill: none; stroke: var(--faint); stroke-width: 1.6; }
+.link .next, .link.next { stroke-dasharray: 5 4; }
+.card.next { fill: none; stroke: var(--faint); stroke-dasharray: 5 4; }
+.glyph { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.solid { fill: currentColor; stroke: none; }
+.c-throat { color: var(--throat); } .c-air { color: var(--air); } .c-fused { color: var(--fused); }
+.c-muted { color: var(--muted); } .c-good { color: var(--good); }
+.title, .row { font-size: 14.5px; font-weight: 600; fill: var(--ink); }
+.sub { font-size: 12.5px; fill: var(--muted); }
+.arrow { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
