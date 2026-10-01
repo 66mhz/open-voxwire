@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import hashlib
 import json
 import random
 import re
@@ -47,6 +48,7 @@ LABELS = {"throat": "Throat only", "air": "Air only", "fusion": "Fusion"}
 PRE_ROLL_S, POST_ROLL_S = 0.3, 0.4   # a take starts a beat before Enter and ends a beat after
 BOOTSTRAP = 2000
 CONDITION = re.compile(r"[a-z0-9][a-z0-9-]*")
+SESSION = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
 OFFSET_WARN_MS = 10.0                # beyond this, the channels aren't on one clock
 
 
@@ -241,17 +243,22 @@ class Recorder:
     def __init__(self, sd, device: int, sr: int, keep_s: float = 120.0):
         self.sr, self.keep = sr, int(keep_s * sr)
         self.blocks: collections.deque = collections.deque()
+        self.gaps: collections.deque = collections.deque()   # frames where input was dropped
         self.total = 0
         self.lock = threading.Lock()
         self.stream = sd.InputStream(device=device, channels=2, samplerate=sr,
                                      dtype="float32", callback=self._callback)
 
-    def _callback(self, indata, frames, _time, _status) -> None:
+    def _callback(self, indata, frames, _time, status) -> None:
         with self.lock:
+            if status.input_overflow:            # samples were lost just before this block
+                self.gaps.append(self.total)
             self.blocks.append((self.total, indata[:, :2].copy()))
             self.total += frames
             while self.blocks and self.blocks[0][0] + len(self.blocks[0][1]) < self.total - self.keep:
                 self.blocks.popleft()
+            while self.gaps and self.gaps[0] < self.total - self.keep:
+                self.gaps.popleft()
 
     def __enter__(self) -> Recorder:
         self.stream.start()
@@ -264,6 +271,11 @@ class Recorder:
     def now(self) -> int:
         with self.lock:
             return self.total
+
+    def dropped(self, start: int, end: int) -> bool:
+        """True if PortAudio lost input inside [start, end): such a take has a hole."""
+        with self.lock:
+            return any(start < gap < end for gap in self.gaps)
 
     def take(self, start: int, end: int) -> np.ndarray:
         with self.lock:
@@ -352,14 +364,64 @@ def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:48]
 
 
+def take_name(text: str) -> str:
+    """A file name for a phrase's take: readable, and unique to the exact text,
+    so two phrases never share a file however alike they are."""
+    return f"{_slug(text)[:40] or 'phrase'}-{hashlib.sha256(text.encode()).hexdigest()[:8]}"
+
+
+def session_dir(name: str) -> Path:
+    """recordings/eval/<name>. A plain name only, so a session can't land
+    outside the git-ignored folder."""
+    if not SESSION.fullmatch(name):
+        raise SystemExit(f"--session takes a plain name (letters, digits, - and _), not {name!r}")
+    return DATA / name
+
+
+def run_takes(rec, todo: list[str], *, sr: int, commit, ask=input, say=print,
+              first: int = 1, total: int | None = None) -> int:
+    """Record each phrase in `todo` until a take of it is kept; return how many
+    are left. A take is committed only once you keep it: Enter keeps it and goes
+    on, q keeps it and stops, r throws it away. A take with dropped samples, or
+    one too short to hold a phrase, is thrown away and asked for again.
+    Interrupting at any prompt leaves that phrase unrecorded."""
+    total = total or len(todo)
+    i = 0
+    while i < len(todo):
+        text = todo[i]
+        say(f"\n[{first + i}/{total}]  {text}")
+        ask("  Enter, then read it … ")
+        start = rec.now() - int(PRE_ROLL_S * sr)
+        ask("  ● recording · Enter when done ")
+        time.sleep(POST_ROLL_S)
+        end = rec.now()
+        audio = rec.take(start, end)
+        if rec.dropped(start, end):
+            say("  ! the input dropped samples during that take (the computer was busy); once more")
+            continue
+        if len(audio) < (PRE_ROLL_S + POST_ROLL_S + 0.2) * sr:
+            say("  ! that was too short to hold a phrase; once more")
+            continue
+        for w in level_warnings(audio):
+            say(f"  ! {w}")
+        answer = ask("  Enter = keep · r = redo · q = keep and quit ").strip().lower()
+        if answer == "r":
+            continue
+        commit(text, audio)
+        i += 1
+        if answer == "q":
+            break
+    return len(todo) - i
+
+
 def cmd_record(args) -> None:
+    session = session_dir(args.session)
     if not CONDITION.fullmatch(args.condition):
         raise SystemExit("--condition takes lowercase letters, digits and hyphens, e.g. quiet or noisy")
     sd = _sounddevice()
     dev = _pick_device(sd, args.device)
     info = sd.query_devices(dev)
     sr = int(info["default_samplerate"])
-    session = DATA / args.session
     (session / args.condition).mkdir(parents=True, exist_ok=True)
     manifest = session / "manifest.jsonl"
 
@@ -372,43 +434,26 @@ def cmd_record(args) -> None:
     print("Read each phrase as you'd dictate it. Redo only if you misread it or got "
           "interrupted, never because you think the mic misheard: that would bias the test.")
 
+    def commit(text: str, audio: np.ndarray) -> None:
+        rel = f"{args.condition}/{take_name(text)}.wav"
+        sf.write(session / rel, audio, sr, subtype="FLOAT")
+        with manifest.open("a") as f:
+            f.write(json.dumps({"condition": args.condition, "text": text, "file": rel,
+                                "sr": sr, "device": info["name"],
+                                "recorded_at": datetime.now().isoformat(timespec="seconds")}) + "\n")
+
     with Recorder(sd, dev, sr) as rec:
-        i = 0
-        while i < len(todo):
-            text = todo[i]
-            print(f"\n[{len(done) + i + 1}/{len(phrases)}]  {text}")
-            input("  Enter, then read it … ")
-            start = rec.now() - int(PRE_ROLL_S * sr)
-            input("  ● recording · Enter when done ")
-            time.sleep(POST_ROLL_S)
-            audio = rec.take(start, rec.now())
-            if len(audio) < (PRE_ROLL_S + POST_ROLL_S + 0.2) * sr:
-                print("  ! that was too short to hold a phrase; once more")
-                continue
-            rel = f"{args.condition}/{_slug(text)}.wav"
-            sf.write(session / rel, audio, sr, subtype="FLOAT")
-            with manifest.open("a") as f:
-                f.write(json.dumps({"condition": args.condition, "text": text, "file": rel,
-                                    "sr": sr, "device": info["name"],
-                                    "recorded_at": datetime.now().isoformat(timespec="seconds")}) + "\n")
-            for w in level_warnings(audio):
-                print(f"  ! {w}")
-            answer = input("  Enter = next · r = redo · q = quit ").strip().lower()
-            if answer == "q":
-                break
-            if answer != "r":
-                i += 1
-    left = len(todo) - i
+        left = run_takes(rec, todo, sr=sr, commit=commit, first=len(done) + 1, total=len(phrases))
     print(f"\n{'Done' if not left else f'{left} left'}. Run the same command to "
           f"{'record another condition' if not left else 'resume'}; `score` when all are in.")
 
 
 def cmd_score(args) -> None:
+    session = session_dir(args.session)
     model = args.model or stt.default_model()
     if not model or not stt.model_available(model):
         raise SystemExit(f"speech-to-text model {model!r} can't run here; "
                          f"available: {', '.join(stt.available_models()) or 'none'}")
-    session = DATA / args.session
     print(f"Scoring session '{args.session}' with {model} …")
     rows = score_takes(session, model)
     summary = summarize(rows)

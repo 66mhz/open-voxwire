@@ -189,3 +189,103 @@ def test_the_channel_offset_is_measured_and_reported(fe):
     rows[0]["offset_ms"] = offset
     md = fe.report(fe.summarize(rows, b=50), model="m", label="M", session="main", recorded="x")
     assert "quiet 120 ms" in md and "not sample-aligned hardware" in md
+
+
+# ── recording: only kept, whole takes count ────────────────────────────────
+class _FakeRecorder:
+    """Stands in for the microphone. Every now() is a second later, each take is
+    filled with its own number (so a test can tell takes apart), and the takes
+    listed in `drop` report dropped samples."""
+
+    def __init__(self, sr=16000, drop=()):
+        self.sr, self.clock, self.made, self.checked, self.drop = sr, 0, 0, 0, set(drop)
+
+    def now(self):
+        self.clock += self.sr
+        return self.clock
+
+    def take(self, start, end):
+        self.made += 1
+        return np.full((end - start, 2), self.made / 100, np.float32)
+
+    def dropped(self, start, end):
+        self.checked += 1
+        return self.checked in self.drop
+
+
+def _keys(*presses):
+    """Answers for run_takes' prompts, in order; an exception class is raised at its prompt."""
+    it = iter(presses)
+
+    def ask(_prompt):
+        key = next(it)
+        if isinstance(key, type) and issubclass(key, BaseException):
+            raise key
+        return key
+    return ask
+
+
+@pytest.fixture
+def takes(fe, monkeypatch):
+    monkeypatch.setattr(fe.time, "sleep", lambda _s: None)
+    kept = []
+
+    def run(todo, *presses, rec=None):
+        """Phrases left; what was kept, as (phrase, take number / 100), is in run.kept."""
+        rec = rec or _FakeRecorder()
+        return fe.run_takes(rec, todo, sr=rec.sr, ask=_keys(*presses),
+                            commit=lambda text, audio: kept.append((text, round(float(audio[0, 0]), 2))),
+                            say=lambda _line: None)
+    run.kept = kept
+    return run
+
+
+def test_a_redone_take_is_never_kept(takes):
+    left = takes(["stash the changes"], "", "", "r", "", "", "")
+    assert (left, takes.kept) == (0, [("stash the changes", 0.02)])    # the second take
+
+
+def test_interrupting_at_the_keep_prompt_keeps_nothing(takes):
+    with pytest.raises(KeyboardInterrupt):
+        takes(["stash the changes"], "", "", KeyboardInterrupt)
+    assert takes.kept == []
+
+
+def test_q_keeps_the_take_and_stops(takes):
+    left = takes(["stash the changes", "run the tests"], "", "", "q")
+    assert (left, takes.kept) == (1, [("stash the changes", 0.01)])
+
+
+def test_a_take_with_dropped_samples_is_asked_for_again(takes):
+    """The first take reports a gap: it's thrown away without a keep prompt."""
+    left = takes(["stash the changes"], "", "", "", "", "", rec=_FakeRecorder(drop={1}))
+    assert (left, takes.kept) == (0, [("stash the changes", 0.02)])
+
+
+def test_the_recorder_remembers_where_input_was_dropped(fe):
+    stream = SimpleNamespace(start=lambda: None, stop=lambda: None, close=lambda: None)
+    rec = fe.Recorder(SimpleNamespace(InputStream=lambda **_kw: stream), device=0, sr=16000)
+    block = np.zeros((1600, 2), np.float32)
+    for lost in (False, True, False):                       # input lost just before frame 1600
+        rec._callback(block, 1600, None, SimpleNamespace(input_overflow=lost))
+    assert rec.dropped(0, 3200)                             # spans the gap
+    assert not rec.dropped(1600, 4800)                      # starts after it
+
+
+def test_every_phrase_gets_its_own_file(fe):
+    long_a = "check the server logs on the staging machine before the deploy"
+    long_b = "check the server logs on the staging machine before the release"
+    names = [fe.take_name(t) for t in ("stop", "Stop.", "stop!", long_a, long_b)]
+    assert len(set(names)) == len(names)
+    assert fe.take_name("stop") == fe.take_name("stop")     # a re-recording replaces its file
+    assert all(re.fullmatch(r"[a-z0-9-]+", n) for n in names)
+
+
+@pytest.mark.parametrize("name", ["../escape", "/tmp/elsewhere", "a/b", "..", ""])
+def test_a_session_stays_in_the_ignored_folder(fe, name):
+    with pytest.raises(SystemExit, match="plain name"):
+        fe.main(["--session", name, "score"])
+
+
+def test_a_plain_session_name_is_a_folder_under_recordings_eval(fe):
+    assert fe.session_dir("main") == fe.DATA / "main"
