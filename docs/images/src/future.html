@@ -1,0 +1,144 @@
+<!doctype html>
+<html data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- Future directions: what you can speak through, what runs on your machine, and what it
+     could act on. Solid = works today; dashed = possible next. Keep it in step with the
+     README's Status and Future directions sections. -->
+<svg width="1004" height="524" viewBox="-2 0 1004 524" role="img"
+     aria-label="Voxwire as a hub. You speak through a throat mic and an air mic today, and possibly a Wi-Fi capture node or a wearable next. On your machine it fuses, transcribes, optionally fixes mishearings, routes to plugins and gates risky actions; a throat-only enhancement model is research. Today it acts on your cursor and your plugins; next it could reach coding agents, home and lab automation, robots, more tool servers, and shell, file and desktop tools once the approval gate is proven.">
+  <defs>
+    <!-- 24-unit stroke glyphs -->
+    <symbol id="g-person" viewBox="0 0 24 24"><circle cx="12" cy="6.4" r="3.9"/><path d="M3.5 21.5c0-4.6 3.2-7.4 6-7.9M20.5 21.5c0-4.6-3.2-7.4-6-7.9M8.6 12.2c2.1 1.5 4.7 1.5 6.8 0"/><circle cx="10" cy="13.3" r="1.5" class="solid"/><circle cx="14" cy="13.3" r="1.5" class="solid"/></symbol>
+    <symbol id="g-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v3.5M8.5 21h7"/></symbol>
+    <symbol id="g-board" viewBox="0 0 24 24"><rect x="3.5" y="11" width="17" height="9" rx="1.8"/><rect x="9" y="13.5" width="6" height="4" rx=".6"/><path d="M7 20v2.5M12 20v2.5M17 20v2.5M9.2 7.4a4 4 0 0 1 5.6 0M6.6 4.8a7.6 7.6 0 0 1 10.8 0"/></symbol>
+    <symbol id="g-pendant" viewBox="0 0 24 24"><path d="M5.5 2.5c0 6 3 9.5 6.5 10.5M18.5 2.5c0 6-3 9.5-6.5 10.5"/><circle cx="12" cy="17" r="4"/></symbol>
+    <symbol id="g-merge" viewBox="0 0 24 24"><path d="M3 6c6.5 0 7 6 12.5 6M3 18c6.5 0 7-6 12.5-6M15.5 12H21"/></symbol>
+    <symbol id="g-text" viewBox="0 0 24 24"><path d="M3.5 10v4M6.5 7v10M9.5 9v6M13.5 8H21M13.5 12H21M13.5 16h4.5"/></symbol>
+    <symbol id="g-check" viewBox="0 0 24 24"><path d="M3.5 6h12M3.5 11h9M3.5 16h5m5 .5 2.8 2.8 4.7-5.8"/></symbol>
+    <symbol id="g-wave" viewBox="0 0 24 24"><path d="M2.5 13h2l2-5 3 10 3-8 2 3h2M19.5 3.5v5M17 6h5"/></symbol>
+    <symbol id="g-route" viewBox="0 0 24 24"><path d="M3 12h6c3.5 0 4.5-6 9-6M9 12c3.5 0 4.5 6 9 6M16 3.5 18.5 6 16 8.5M16 15.5l2.5 2.5-2.5 2.5"/></symbol>
+    <symbol id="g-shield" viewBox="0 0 24 24"><path d="M12 2.8 19 5.8v5.4c0 4.4-3 7.9-7 9.9-4-2-7-5.5-7-9.9V5.8z"/><path d="m8.8 11.9 2.3 2.3 4.2-4.6"/></symbol>
+    <symbol id="g-cursor" viewBox="0 0 24 24"><path d="M12 6v12M8.5 4c2 0 3.5.7 3.5 2 0-1.3 1.5-2 3.5-2M8.5 20c2 0 3.5-.7 3.5-2 0 1.3 1.5 2 3.5 2"/></symbol>
+    <symbol id="g-plug" viewBox="0 0 24 24"><path d="M9 2.5V7M15 2.5V7M6 7h12v3.5a6 6 0 0 1-12 0zM12 16.5v5"/></symbol>
+    <symbol id="g-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4.5l-3 15"/></symbol>
+    <symbol id="g-home" viewBox="0 0 24 24"><path d="M3.5 11.5 12 4.5l8.5 7M6 9.5V20h12V9.5M10 20v-5h4v5"/></symbol>
+    <symbol id="g-robot" viewBox="0 0 24 24"><rect x="4.5" y="8" width="15" height="11.5" rx="2.5"/><path d="M12 8V4.5M2.5 12.5v3M21.5 12.5v3"/><circle cx="12" cy="3.6" r="1" class="solid"/><circle cx="9.3" cy="13.2" r="1.3" class="solid"/><circle cx="14.7" cy="13.2" r="1.3" class="solid"/></symbol>
+    <symbol id="g-servers" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="6.5" rx="1.6"/><rect x="3.5" y="14" width="17" height="6.5" rx="1.6"/><path d="M7 6.75h.01M7 17.25h.01M12 10v4"/></symbol>
+    <symbol id="g-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3M12 14.5v2.5"/></symbol>
+  </defs>
+
+  <!-- column heads -->
+  <g font-size="12" class="muted" letter-spacing=".08em" font-weight="600">
+    <text x="0" y="96">YOU SPEAK THROUGH</text>
+    <text x="1000" y="30" text-anchor="end">IT ACTS ON</text>
+  </g>
+
+  <!-- links: inputs into the hub, the hub out to what it acts on -->
+  <g class="link">
+    <path d="M232,144 C284,144 280,228 332,228"/>
+    <path d="M232,220 C284,220 280,248 332,248"/>
+    <path d="M232,296 C284,296 280,268 332,268" class="next"/>
+    <path d="M232,372 C284,372 280,288 332,288" class="next"/>
+    <path d="M668,198 C716,198 712,72 760,72"/>
+    <path d="M668,218 C716,218 712,134 760,134"/>
+    <path d="M668,238 C716,238 712,196 760,196" class="next"/>
+    <path d="M668,258 C716,258 712,258 760,258" class="next"/>
+    <path d="M668,278 C716,278 712,320 760,320" class="next"/>
+    <path d="M668,298 C716,298 712,382 760,382" class="next"/>
+    <path d="M668,318 C716,318 712,444 760,444" class="next"/>
+  </g>
+
+  <!-- inputs -->
+  <g class="nodes">
+    <rect x="0" y="116" width="232" height="56" rx="12" class="card"/>
+    <use href="#g-person" x="16" y="132" width="24" height="24" class="glyph c-throat"/>
+    <text x="54" y="140" class="title">Throat mic</text><text x="54" y="158" class="sub">wired or Bluetooth</text>
+
+    <rect x="0" y="192" width="232" height="56" rx="12" class="card"/>
+    <use href="#g-mic" x="16" y="208" width="24" height="24" class="glyph c-air"/>
+    <text x="54" y="216" class="title">Air mic</text><text x="54" y="234" class="sub">any ordinary mic</text>
+
+    <rect x="0" y="268" width="232" height="56" rx="12" class="card next"/>
+    <use href="#g-board" x="16" y="284" width="24" height="24" class="glyph c-muted"/>
+    <text x="54" y="292" class="title">Capture node</text><text x="54" y="310" class="sub">Wi-Fi board, spec ready</text>
+
+    <rect x="0" y="344" width="232" height="56" rx="12" class="card next"/>
+    <use href="#g-pendant" x="16" y="360" width="24" height="24" class="glyph c-muted"/>
+    <text x="54" y="368" class="title">Wearables</text><text x="54" y="386" class="sub">a pendant or a handheld</text>
+  </g>
+
+  <!-- the hub -->
+  <rect x="332" y="48" width="336" height="420" rx="18" class="panel"/>
+  <rect x="332" y="48" width="336" height="420" rx="18" class="panel-edge"/>
+  <text x="352" y="86" font-size="19" font-weight="600" class="ink">Voxwire</text>
+  <text x="436" y="86" font-size="13.5" class="muted">on your machine</text>
+  <g class="nodes">
+    <rect x="352" y="112" width="296" height="48" rx="10" class="card"/>
+    <use href="#g-merge" x="366" y="124" width="24" height="24" class="glyph c-fused"/>
+    <text x="402" y="141" class="row">Dual-mic fusion</text><text x="634" y="141" class="sub" text-anchor="end">throat + air</text>
+
+    <rect x="352" y="170" width="296" height="48" rx="10" class="card"/>
+    <use href="#g-text" x="366" y="182" width="24" height="24" class="glyph c-muted"/>
+    <text x="402" y="199" class="row">Speech-to-text</text><text x="634" y="199" class="sub" text-anchor="end">on-device</text>
+
+    <rect x="352" y="228" width="296" height="48" rx="10" class="card"/>
+    <use href="#g-check" x="366" y="240" width="24" height="24" class="glyph c-muted"/>
+    <text x="402" y="257" class="row">Faithful fixup</text><text x="634" y="257" class="sub" text-anchor="end">optional</text>
+
+    <rect x="352" y="286" width="296" height="48" rx="10" class="card next"/>
+    <use href="#g-wave" x="366" y="298" width="24" height="24" class="glyph c-throat"/>
+    <text x="402" y="315" class="row">Throat-only model</text><text x="634" y="315" class="sub" text-anchor="end">research</text>
+
+    <rect x="352" y="344" width="296" height="48" rx="10" class="card"/>
+    <use href="#g-route" x="366" y="356" width="24" height="24" class="glyph c-muted"/>
+    <text x="402" y="373" class="row">Plugin gateway</text><text x="634" y="373" class="sub" text-anchor="end">by wake word</text>
+
+    <rect x="352" y="402" width="296" height="48" rx="10" class="card"/>
+    <use href="#g-shield" x="366" y="414" width="24" height="24" class="glyph c-good"/>
+    <text x="402" y="431" class="row">Approval gate</text><text x="634" y="431" class="sub" text-anchor="end">deny by default</text>
+  </g>
+
+  <!-- what it acts on -->
+  <g class="nodes">
+    <rect x="760" y="47" width="240" height="50" rx="12" class="card"/>
+    <use href="#g-cursor" x="776" y="60" width="24" height="24" class="glyph c-muted"/>
+    <text x="812" y="69" class="title">Your cursor</text><text x="812" y="86" class="sub">text pasted in any app</text>
+
+    <rect x="760" y="109" width="240" height="50" rx="12" class="card"/>
+    <use href="#g-plug" x="776" y="122" width="24" height="24" class="glyph c-muted"/>
+    <text x="812" y="131" class="title">Your plugins</text><text x="812" y="148" class="sub">drop-in Python modules</text>
+
+    <rect x="760" y="171" width="240" height="50" rx="12" class="card next"/>
+    <use href="#g-code" x="776" y="184" width="24" height="24" class="glyph c-muted"/>
+    <text x="812" y="193" class="title">Coding agents</text><text x="812" y="210" class="sub">a task, murmured</text>
+
+    <rect x="760" y="233" width="240" height="50" rx="12" class="card next"/>
+    <use href="#g-home" x="776" y="246" width="24" height="24" class="glyph c-muted"/>
+    <text x="812" y="255" class="title">Home and lab</text><text x="812" y="272" class="sub">automation, quietly</text>
+
+    <rect x="760" y="295" width="240" height="50" rx="12" class="card next"/>
+    <use href="#g-robot" x="776" y="308" width="24" height="24" class="glyph c-muted"/>
+    <text x="812" y="317" class="title">Robots</text><text x="812" y="334" class="sub">a mic that ignores motors</text>
+
+    <rect x="760" y="357" width="240" height="50" rx="12" class="card next"/>
+    <use href="#g-servers" x="776" y="370" width="24" height="24" class="glyph c-muted"/>
+    <text x="812" y="379" class="title">More tool servers</text><text x="812" y="396" class="sub">federated, e.g. over MCP</text>
+
+    <rect x="760" y="419" width="240" height="50" rx="12" class="card next"/>
+    <use href="#g-lock" x="776" y="432" width="24" height="24" class="glyph c-muted"/>
+    <text x="812" y="441" class="title">Shell, files, desktop</text><text x="812" y="458" class="sub">once the gate is proven</text>
+  </g>
+
+  <!-- legend -->
+  <g font-size="13" class="muted">
+    <path d="M340,506 L372,506" class="link"/><text x="380" y="510">works today</text>
+    <path d="M486,506 L518,506" class="link next"/><text x="526" y="510">possible next</text>
+  </g>
+</svg>
+</body>
+</html>

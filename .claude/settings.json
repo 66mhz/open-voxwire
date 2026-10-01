@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(uv pip:*)",
+      "Bash(uv venv:*)",
+      "Bash(ruff:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(./scripts/install.sh)",
+      "Bash(./run.sh:*)",
+      "Read",
+      "Edit",
+      "Write"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(gh repo create:*)",
+      "Bash(gh repo edit:*)",
+      "Bash(git remote:*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}

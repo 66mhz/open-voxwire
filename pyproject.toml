@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voxwire"
+version = "0.1.0"
+description = "Throat-mic-native, local-first voice agent: speech → on-device STT → a tool-capable agent."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [{ name = "Cagri Eryilmaz" }]
+keywords = ["speech-to-text", "voice-agent", "throat-mic", "stt", "dictation", "local-first"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+
+# Cross-platform core: capture, server, dictation, clipboard fallback, remote fixup.
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "sounddevice",
+  "soundfile",
+  "numpy",
+  "scipy",
+  "pynput",
+  "pyperclip",
+  "httpx",
+  "websockets",        # scripts/stream_pcm.py (also arrives via uvicorn[standard])
+]
+
+[project.optional-dependencies]
+# Cross-platform STT backend (CTranslate2; CPU or CUDA) — the default off Apple Silicon.
+faster-whisper = ["faster-whisper"]
+# Apple-Silicon-only STT + on-device LLM fixup (no wheels exist off Apple Silicon).
+mlx = ["mlx-whisper", "parakeet-mlx", "mlx-lm"]
+# System-tray app on Windows/Linux (and the non-menubar fallback on macOS).
+tray = ["pystray", "pillow"]
+# macOS-native menubar app.
+macos = ["rumps", "pystray", "pillow"]
+# Dev + CI tooling.
+dev = ["pytest>=8", "ruff>=0.6"]
+
+# NOTE: the code currently imports flat top-level modules (`import gateway`,
+# `import stt`, …); the inner `voxwire/` dir is the import root. Moving to a real
+# `voxwire.` namespace package is deferred to the two-repo sync decision,
+# so this maps the layout as-is rather than renaming imports now.
+# Until that move, only editable installs (`pip install -e .`) work: a built wheel
+# would not carry `index.html`, the server writes recordings next to its own
+# files, and names like `server` would land at the top of site-packages.
+# tests/test_packaging.py keeps the module and package lists below complete.
+[tool.setuptools]
+package-dir = { "" = "voxwire" }
+py-modules = ["faithful", "gateway", "server", "menubar", "tray", "tiers", "fusion"]
+
+[tool.setuptools.packages.find]
+where = ["voxwire"]
+include = ["integrations*", "stt*", "osplatform*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "voxwire/.venv", "recordings"]
+
+[tool.ruff.lint]
+# Intentionally minimal for the first CI: real-error rules only. E501 (line length)
+# is off — the codebase has many long lines; tighten in a later pass.
+select = ["E", "F", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["voxwire/tests"]
