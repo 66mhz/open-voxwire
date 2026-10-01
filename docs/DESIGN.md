@@ -223,7 +223,8 @@ history/hygiene gate is cleared and approved.)
 
 **In build-out**
 
-- Measuring fused vs throat-solo word-error rate on real recordings.
+- Measuring fused vs throat-solo word-error rate on real recordings
+  (`scripts/fusion_eval.py`; protocol in [fusion-eval.md](fusion-eval.md)).
 - Two-separate-device live capture (the `align()` primitive exists).
 - The throat-only enhancement model.
 - The persona/executor security model, including a per-OS confirm gate that rejects
