@@ -207,3 +207,34 @@ def test_backend_discovery_registers_builtins():
     stt._discover_backends()   # idempotent
     names = {b.name for b in stt.registered()}
     assert {"mlx", "faster-whisper"} <= names
+
+
+# ── faster-whisper gets samples, never a file to decode ─────────────────────
+def test_faster_whisper_is_handed_16k_mono_samples(tmp_path):
+    """Given a path, faster-whisper decodes through PyAV, and PyAV 19 broke that
+    (an argument faster-whisper 1.2.1 still passes is gone). The backend reads the
+    WAV itself and passes float32 samples at 16 kHz, whatever the file holds."""
+    import numpy as np
+    import soundfile as sf
+    from stt.faster_whisper_backend import FasterWhisperBackend
+
+    seen = []
+
+    class _Model:
+        def transcribe(self, audio, beam_size):
+            seen.append(audio)
+            return iter([type("Seg", (), {"text": " heard"})()]), None
+
+    backend = FasterWhisperBackend()
+    spec = stt.MODELS["fw-base"]
+    backend._cache[spec.repo] = _Model()
+    mono16 = tmp_path / "mono16.wav"
+    sf.write(mono16, np.zeros(16000, np.float32), 16000)
+    stereo48 = tmp_path / "stereo48.wav"
+    sf.write(stereo48, np.zeros((48000, 2), np.float32), 48000)
+
+    for wav in (mono16, stereo48):
+        assert backend.transcribe(wav, spec).text == "heard"
+    for audio in seen:
+        assert isinstance(audio, np.ndarray) and audio.dtype == np.float32
+        assert audio.ndim == 1 and audio.shape[0] == 16000    # one second at 16 kHz
