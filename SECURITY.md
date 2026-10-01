@@ -26,6 +26,8 @@ untrusted input that may be trying to command your machine.**
   impossible, not merely discouraged by a prompt.
 - **Local exposure.** The server listens on `127.0.0.1:8123` (loopback only). Do
   not expose it to a network without putting your own authentication in front.
+- **Other web pages.** Any page open in your browser can send requests to
+  `127.0.0.1`, and can reach it under its own name through DNS rebinding.
 
 ## How Voxwire defends against it
 
@@ -41,6 +43,13 @@ paths the agent cannot talk its way around. See `docs/DESIGN.md §3` for the des
 - **Confirmation is owned by the executor host.** The native confirmation dialog
   lives in the menubar process, not in the agent. It does not yet reject
   synthetic input (see *In build-out* below).
+- **Only this machine, and only Voxwire's own page, reach the server.** Every
+  HTTP request and WebSocket must come from a loopback peer, name a loopback host
+  (`127.0.0.1`, `localhost`, `::1`), and, if a browser sent it, carry Voxwire's own
+  page as its Origin. Anything else is refused before a route runs, so a web page
+  can't arm the mic, read recordings, write your clipboard or route a command,
+  whether it tries a cross-site request or DNS rebinding
+  (`voxwire/tests/test_local_only.py`).
 - **A kill switch** in the menubar releases the microphone and turns dictation
   off, calling the server directly rather than going through the agent. It does
   not stop the server or lock its API: any local process can re-arm the mic. Treat
@@ -64,7 +73,11 @@ paths the agent cannot talk its way around. See `docs/DESIGN.md §3` for the des
 - **Start with dictation only.** Grant shell/file/desktop tools deliberately, one
   host at a time, and only on machines you control.
 - **Keep the server on loopback.** If you must reach it remotely, tunnel it (e.g.
-  SSH/Tailscale) and add authentication — Voxwire ships none.
+  SSH/Tailscale) and add authentication — Voxwire ships none. An SSH port forward
+  arrives as a loopback request and works as is. A reverse proxy is refused unless
+  it rewrites the Host and Origin headers (Voxwire ignores `X-Forwarded-For`, so
+  the peer it checks is the proxy's own connection), and doing that switches these
+  checks off for everything behind it, so put your authentication in that proxy.
 - **Mind the room.** A mic others can reach is a command surface. Use push-to-talk,
   and prefer the throat mic where acoustic injection is a concern.
 - **Review integrations before installing them.** A plugin runs in your process

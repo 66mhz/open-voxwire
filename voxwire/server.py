@@ -41,8 +41,10 @@ import scipy.signal as sps
 import sounddevice as sd
 import soundfile as sf
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from pydantic import AfterValidator, BaseModel
+from starlette.requests import HTTPConnection
+from starlette.websockets import WebSocketClose
 
 import faithful    # the fixup's faithfulness guard (rule 4): only mis-hearing corrections pass
 import fusion      # dual-mic (throat + air) fusion DSP — pure, no I/O
@@ -1035,12 +1037,23 @@ def _loopback_peer(client) -> bool:
     return ip.is_loopback
 
 
-def _trusted_ws_origin(origin: str | None, host: str | None) -> bool:
-    """Browsers always send Origin on a WebSocket but never apply CORS to it, so
-    without this check any web page could stream audio into this server and have
-    the transcript pasted at your cursor. Allow clients that send no Origin (the
-    capture node, scripts) and this server's own page on a loopback host;
-    checking the Host too defeats DNS rebinding."""
+def _loopback_host(host: str | None) -> bool:
+    """True only when a Host header names this machine (127.0.0.1, localhost or
+    ::1, on any port). A web page that reaches the server through DNS rebinding
+    talks to it under the page's own name, and its Host says so."""
+    if not host:
+        return False
+    h = urlsplit(f"//{host}")
+    return h.hostname in _LOOPBACK_HOSTS and h.username is None and h.password is None
+
+
+def _trusted_origin(origin: str | None, host: str | None) -> bool:
+    """Browsers send an Origin on cross-site requests, on every POST, and on every
+    WebSocket. Allow clients that send none (the menubar, the capture node,
+    scripts, curl) and this server's own page on a loopback host. Without this,
+    any web page could drive the API (CSRF) or stream audio in and have the
+    transcript pasted at your cursor: WebSockets skip CORS entirely, and a
+    simple POST needs no preflight. Checking the Host too defeats DNS rebinding."""
     if origin is None:
         return True
     o = urlsplit(origin)
@@ -1048,6 +1061,43 @@ def _trusted_ws_origin(origin: str | None, host: str | None) -> bool:
     return (o.scheme in ("http", "https") and h is not None
             and o.hostname in _LOOPBACK_HOSTS and h.hostname in _LOOPBACK_HOSTS
             and o.netloc == h.netloc)
+
+
+def _local_request(conn: HTTPConnection) -> bool:
+    """The one gate in front of every route: a peer on this machine, addressed to
+    a loopback name, and, if it is a browser, on Voxwire's own page."""
+    host = conn.headers.get("host")
+    return (_loopback_peer(conn.client) and _loopback_host(host)
+            and _trusted_origin(conn.headers.get("origin"), host))
+
+
+class LocalOnly:
+    """ASGI middleware that refuses any HTTP request or WebSocket failing
+    `_local_request`, before a route runs. Deny by default: a route added later
+    is covered without doing anything. Voxwire has no authentication, so this is
+    what keeps other web pages and other machines from arming the mic, reading
+    recordings, writing the clipboard or routing commands."""
+
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] in ("http", "websocket") and not _local_request(HTTPConnection(scope)):
+            refuse = (PlainTextResponse("Voxwire answers only its own page on this machine.",
+                                        status_code=403)
+                      if scope["type"] == "http" else WebSocketClose(code=1008))
+            await refuse(scope, receive, send)
+            return
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(LocalOnly)
+
+# How every launcher serves the app (server.py, menubar.py, tray.py): loopback
+# only, with proxy headers off. Uvicorn otherwise trusts X-Forwarded-For from
+# 127.0.0.1, so a local reverse proxy, or any local process, would replace the
+# peer LocalOnly checks with whatever address the header names.
+UVICORN = {"host": "127.0.0.1", "port": 8123, "log_level": "warning", "proxy_headers": False}
 
 
 def _stream_start(cfg: dict, evt: dict) -> tuple[dict | None, str | None]:
@@ -1083,10 +1133,12 @@ async def audio_stream(ws: WebSocket) -> None:
     Multiple utterances may be sent on one connection; "cancel" drops the buffer.
     A start frame with bad values is refused with an error and changes nothing.
     Only peers on this machine may connect (see _loopback_peer), and of those,
-    browser pages other than this server's own are refused (see _trusted_ws_origin).
+    browser pages other than this server's own are refused (see _trusted_origin).
+    LocalOnly already enforces both for every route; the endpoint checks again
+    because it is the one that can paste at your cursor.
     """
     if not (_loopback_peer(ws.client)
-            and _trusted_ws_origin(ws.headers.get("origin"), ws.headers.get("host"))):
+            and _trusted_origin(ws.headers.get("origin"), ws.headers.get("host"))):
         await ws.close(code=1008)           # policy violation, before any audio flows
         return
     await ws.accept()
@@ -1287,4 +1339,4 @@ if not os.environ.get("VOXWIRE_NO_IDLE_WATCH"):
 if __name__ == "__main__":
     import uvicorn
     print("\n  Voxwire  →  http://127.0.0.1:8123\n")
-    uvicorn.run(app, host="127.0.0.1", port=8123, log_level="warning")
+    uvicorn.run(app, **UVICORN)

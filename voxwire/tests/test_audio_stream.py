@@ -15,8 +15,10 @@ server = pytest.importorskip(
 from fastapi.testclient import TestClient  # noqa: E402
 from starlette.websockets import WebSocketDisconnect  # noqa: E402
 
-client = TestClient(server.app, client=("127.0.0.1", 50000))   # a local peer
-URL = "/api/audio-stream"
+client = TestClient(server.app, base_url="http://127.0.0.1:8123", client=("127.0.0.1", 50000))   # this machine (see LocalOnly)
+# Absolute: TestClient joins a relative WebSocket path onto ws://testserver,
+# whose Host is not this machine, so LocalOnly would refuse it.
+URL = "ws://127.0.0.1:8123/api/audio-stream"
 
 
 @pytest.fixture
@@ -62,7 +64,7 @@ def test_refuses_browser_origins_other_than_its_own(headers):
 def test_refuses_peers_that_are_not_on_this_machine(peer, fake_stt, monkeypatch):
     pasted = []
     monkeypatch.setattr(server, "insert_text", pasted.append)
-    remote = TestClient(server.app, client=(peer, 50000))
+    remote = TestClient(server.app, base_url="http://127.0.0.1:8123", client=(peer, 50000))
     with pytest.raises(WebSocketDisconnect) as exc:
         with remote.websocket_connect(URL) as ws:        # no Origin, like a node
             ws.send_json({"event": "start", "channels": 1, "sr": 16000, "paste": True})
@@ -75,7 +77,8 @@ def test_refuses_peers_that_are_not_on_this_machine(peer, fake_stt, monkeypatch)
 
 @pytest.mark.parametrize("peer", ["127.0.0.1", "127.0.0.2", "::1", "::ffff:127.0.0.1"])
 def test_accepts_loopback_peers(peer):
-    with TestClient(server.app, client=(peer, 50000)).websocket_connect(URL) as ws:
+    with TestClient(server.app, base_url="http://127.0.0.1:8123",
+                    client=(peer, 50000)).websocket_connect(URL) as ws:
         assert _no_audio_roundtrip(ws) == {"error": "no audio received"}
 
 

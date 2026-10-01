@@ -68,7 +68,7 @@ def start_server_in_thread() -> bool:
         return False
     import uvicorn
     import server  # its module-level side effects (idle-watch thread) are fine here
-    cfg = uvicorn.Config(server.app, host="127.0.0.1", port=PORT, log_level="warning")
+    cfg = uvicorn.Config(server.app, **{**server.UVICORN, "port": PORT})
     srv = uvicorn.Server(cfg)
     threading.Thread(target=srv.run, daemon=True).start()
     return True

@@ -99,6 +99,14 @@ Because an always-on mic that can run commands is a real attack surface:
   synthetic input (Epic 2 / R1), and Windows/Linux have no proven gate — so no
   executor path is enabled anywhere. Hardening a per-OS gate is a separate,
   human-reviewed task; a gate is never weakened to make a feature work.
+- **Only this machine, and only Voxwire's own page, reach the server.** The server
+  has no authentication, so one ASGI middleware (`LocalOnly` in `server.py`) sits
+  in front of every route, HTTP and WebSocket. A request must come from a loopback
+  peer, name a loopback host (`127.0.0.1`, `localhost`, `::1`), and, if a browser
+  sent it, carry Voxwire's own page as its Origin. Anything else gets a 403 before
+  a route runs. This stops other web pages from driving the API (CSRF) and from
+  reaching it through DNS rebinding, and stops the network if the server is ever
+  bound wider than loopback. A route added later is covered by default.
 
 Start with dictation only; grant executor tools deliberately.
 
