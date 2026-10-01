@@ -44,7 +44,7 @@ tray = ["pystray", "pillow"]
 # macOS-native menubar app.
 macos = ["rumps", "pystray", "pillow"]
 # Dev + CI tooling.
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = ["pytest>=8", "ruff>=0.6", "pillow"]   # pillow: the docs-image tests
 
 # NOTE: the code currently imports flat top-level modules (`import gateway`,
 # `import stt`, …); the inner `voxwire/` dir is the import root. Moving to a real
