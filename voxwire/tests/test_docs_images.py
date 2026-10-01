@@ -1,13 +1,15 @@
-"""Images in docs/ carry no metadata (BYT-122).
+"""Images in the repository carry no metadata (BYT-122).
 
 A phone photo holds the GPS position it was taken at, the phone's model and the
 time, and an edited image can hold an author and its editing history. None of
 that may reach a public repo. docs/images/add_media.py strips it; this test fails
-on any image in docs/ that still carries EXIF (where GPS lives), XMP or IPTC, and
-on HEIC files, which should be converted first. The tool's own tests need Pillow
-(and ffmpeg for the GIF) and skip without them.
+on any image in the repository that still carries EXIF (where GPS lives), XMP or
+IPTC, and on formats the scanner can't read (TIFF, HEIC, camera raw …), which
+should be converted first. The tool's own tests need Pillow (a dev dependency)
+and, for the GIF, ffmpeg, and skip without them.
 """
 import importlib.util
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -26,22 +28,30 @@ def am():
     return module
 
 
-def _docs_files():
-    return [p for p in (ROOT / "docs").rglob("*") if p.is_file() and "__pycache__" not in p.parts]
+SKIP_DIRS = {".git", ".venv", "__pycache__", "recordings", "node_modules", ".pytest_cache",
+             ".ruff_cache", "dist", "build"}
+
+
+def _repo_files():
+    for dirpath, dirnames, filenames in os.walk(ROOT):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not d.endswith(".egg-info")]
+        for name in filenames:
+            yield Path(dirpath) / name
 
 
 # ── the guard ──────────────────────────────────────────────────────────────
-def test_no_image_in_docs_carries_metadata(am):
-    images = [p for p in _docs_files() if p.suffix.lower() in am.IMAGE_SUFFIXES]
-    assert images, "found no images to check; did docs/ move?"
+def test_no_image_in_the_repo_carries_metadata(am):
+    images = [p for p in _repo_files() if p.suffix.lower() in am.IMAGE_SUFFIXES]
+    assert images, "found no images to check; did docs/images move?"
     dirty = {str(p.relative_to(ROOT)): am.metadata_kinds(p) for p in images}
     dirty = {path: kinds for path, kinds in dirty.items() if kinds}
     assert not dirty, f"strip these with docs/images/add_media.py: {dirty}"
 
 
-def test_no_heic_in_docs():
-    heic = [str(p.relative_to(ROOT)) for p in _docs_files() if p.suffix.lower() in (".heic", ".heif")]
-    assert not heic, f"convert with docs/images/add_media.py photo: {heic}"
+def test_only_formats_the_scanner_reads_are_committed(am):
+    unscanned = [str(p.relative_to(ROOT)) for p in _repo_files()
+                 if p.suffix.lower() in am.UNSCANNED_SUFFIXES]
+    assert not unscanned, f"convert with docs/images/add_media.py photo: {unscanned}"
 
 
 # ── the scanner ────────────────────────────────────────────────────────────
@@ -72,6 +82,32 @@ def test_the_scanner_finds_exif_and_xmp_in_a_png(am, Image, tmp_path):
     path = tmp_path / "edited.png"
     Image.new("RGB", (8, 8)).save(path, exif=_phone_exif(Image), pnginfo=info)
     assert am.metadata_kinds(path) == ["EXIF", "XMP"]
+
+
+def test_the_scanner_reads_past_jpeg_fill_bytes(am, Image, tmp_path):
+    """A marker may be padded with extra 0xFF bytes; EXIF behind them still counts."""
+    clean = tmp_path / "clean.jpg"
+    Image.new("RGB", (8, 8)).save(clean)
+    data = clean.read_bytes()
+    payload = b"Exif\x00\x00II*\x00\x08\x00\x00\x00\x00\x00"
+    app1 = b"\xff\xff\xff\xe1" + (len(payload) + 2).to_bytes(2, "big") + payload
+    padded = tmp_path / "padded.jpg"
+    padded.write_bytes(data[:2] + app1 + data[2:])
+    assert am.metadata_kinds(padded) == ["EXIF"]
+
+
+@pytest.mark.parametrize("keyword,kind", [
+    ("Raw profile type iptc", "IPTC"),
+    ("Raw profile type exif", "EXIF"),
+    ("Raw profile type xmp", "XMP"),
+])
+def test_the_scanner_finds_imagemagick_profiles_in_png_text(am, Image, tmp_path, keyword, kind):
+    from PIL.PngImagePlugin import PngInfo
+    info = PngInfo()
+    info.add_text(keyword, "\nprofile\n      4\n00000000\n")
+    path = tmp_path / "magick.png"
+    Image.new("RGB", (8, 8)).save(path, pnginfo=info)
+    assert am.metadata_kinds(path) == [kind]
 
 
 def test_the_scanner_passes_clean_files(am, Image, tmp_path):
