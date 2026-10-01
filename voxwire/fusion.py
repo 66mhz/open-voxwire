@@ -184,6 +184,22 @@ def fuse_stereo(stereo: np.ndarray, sr: int = TARGET_SR, throat_ch: int = 0,
     return fuse(x[:, throat_ch], x[:, air_ch], sr, mode=mode, do_align=False)
 
 
+def render_capture(raw: np.ndarray, native_sr: int, mode: str = "fusion") -> np.ndarray:
+    """The clip the app transcribes for one capture: 16 kHz mono float32.
+
+    A 2-channel capture (throat on ch0, air on ch1, sample-aligned on one device)
+    is resampled per channel and fused in `mode`; anything else is its first
+    channel, resampled. server.py saves exactly this, and the fusion evaluation
+    (scripts/fusion_eval.py) scores exactly this, so its numbers describe what
+    the app does."""
+    x = np.asarray(raw, dtype=np.float32)
+    if x.ndim == 2 and x.shape[1] >= 2:
+        throat = resample(x[:, 0], native_sr)
+        air = resample(x[:, 1], native_sr)
+        return fuse(throat, air, TARGET_SR, mode=mode, do_align=False)
+    return resample(x if x.ndim == 1 else x[:, 0], native_sr)
+
+
 def fuse(throat: np.ndarray, air: np.ndarray, sr: int = TARGET_SR,
          crossover_hz: float = 900.0, mode: str = "fusion",
          do_align: bool = True) -> np.ndarray:

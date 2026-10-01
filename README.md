@@ -236,7 +236,7 @@ Voxwire is early software.
 - Menubar and web UIs that stay in sync, and an always-on macOS service
 
 **In progress**
-- Measuring fusion's word-error rate on real throat-mic recordings
+- Measuring fusion's word-error rate on real throat-mic recordings ([how](docs/fusion-eval.md))
 - Throat-only enhancement for stealth mode
 - Executor tools (shell, files, desktop) behind a confirm dialog that rejects synthetic input
 - An authenticated LAN listener for a Wi-Fi capture node
@@ -318,6 +318,7 @@ Want to build one of these? Most start as a plugin: see [Make it yours](#make-it
 - [Inside Voxwire](docs/how-voxwire-works.html): an illustrated walkthrough (download it and open it
   in a browser)
 - [Capture node](docs/capture-node.md): hardware build spec for a throat + air mic streamer
+- [Measuring fusion](docs/fusion-eval.md): test fusion against either mic alone, on your own voice
 - [Contributing](CONTRIBUTING.md) and [Security](SECURITY.md)
 
 ## License
