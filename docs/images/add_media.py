@@ -105,10 +105,14 @@ def _to_srgb(im):
     icc = im.info.get("icc_profile")
     if not icc:
         return im
+    alpha = "A" in im.getbands() or "transparency" in im.info
+    # The profile describes the pixels as they are (CMYK, gray or RGB), so the
+    # transform starts from the image's own mode; only the output becomes RGB.
+    source = im if im.mode in ("RGB", "RGBA", "CMYK", "L") else im.convert("RGBA" if alpha else "RGB")
     try:
-        mode = "RGBA" if "A" in im.getbands() else "RGB"
-        return ImageCms.profileToProfile(im.convert(mode), ImageCms.ImageCmsProfile(io.BytesIO(icc)),
-                                         ImageCms.createProfile("sRGB"), outputMode=mode)
+        return ImageCms.profileToProfile(source, ImageCms.ImageCmsProfile(io.BytesIO(icc)),
+                                         ImageCms.createProfile("sRGB"),
+                                         outputMode="RGBA" if source.mode == "RGBA" else "RGB")
     except (ImageCms.PyCMSError, OSError, ValueError):
         return im
 
