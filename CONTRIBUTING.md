@@ -94,6 +94,16 @@ uv run docs/images/make_images.py --out /tmp/look        # somewhere else, to co
 
 The feature icons in `docs/images/icons/` are plain SVG files. Edit them directly.
 
+Photos and screen recordings come in through `docs/images/add_media.py`. It turns a
+photo upright and keeps only its pixels: a phone photo carries the GPS position it
+was taken at, the phone's model and the time. A test fails on any image in `docs/`
+that still has EXIF, XMP or IPTC metadata.
+
+```bash
+uv run docs/images/add_media.py photo ~/Downloads/IMG_1234.HEIC throat-mic-photo
+uv run docs/images/add_media.py gif ~/Desktop/demo.mov demo --start 1.5 --duration 9
+```
+
 ## Pull requests
 
 1. Branch off `main`.
