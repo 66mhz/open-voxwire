@@ -248,3 +248,32 @@ def test_fusion_gates_room_noise_around_brief_speech(throat_floor):
     air_n = fusion.normalize(air)
     for t0, t1 in ((1.0, 3.0), (9.0, 11.0)):            # far from the word
         assert band_rms(fused, t0, t1) < 0.1 * band_rms(air_n, t0, t1)
+
+
+# ── render_capture: what the app saves and the evaluation scores ─────────────
+def test_render_capture_resamples_each_channel_then_fuses():
+    sr = 48000
+    raw = np.stack([tone(200, 1.0, sr), tone(200, 1.0, sr) + tone(4000, 1.0, sr, amp=0.6)], axis=1)
+    for mode in fusion.MODES:
+        expected = fusion.fuse(fusion.resample(raw[:, 0], sr), fusion.resample(raw[:, 1], sr),
+                               SR, mode=mode, do_align=False)
+        np.testing.assert_array_equal(fusion.render_capture(raw, sr, mode), expected)
+
+
+def test_render_capture_keeps_throat_on_ch0_and_air_on_ch1():
+    """A swapped channel would silently swap every throat-only and air-only score."""
+    raw = np.stack([tone(200, 1.0), tone(4000, 1.0, amp=0.6)], axis=1)
+    throat = fusion.render_capture(raw, SR, "throat")       # every mode is normalized,
+    air = fusion.render_capture(raw, SR, "air")             # so compare shares, not levels
+
+    def rms(x):
+        return float(np.sqrt(np.mean(x ** 2)))
+    assert high_rms(throat) < 0.05 * rms(throat)
+    assert high_rms(air) > 0.9 * rms(air)
+
+
+def test_render_capture_passes_mono_through_resampled():
+    mono = tone(200, 1.0, 48000)
+    np.testing.assert_array_equal(fusion.render_capture(mono, 48000), fusion.resample(mono, 48000))
+    np.testing.assert_array_equal(fusion.render_capture(mono[:, None], 48000),
+                                  fusion.resample(mono, 48000))
