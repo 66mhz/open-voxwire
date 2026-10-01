@@ -142,6 +142,27 @@ def test_a_lifted_subject_keeps_its_transparency(am, Image, tmp_path):
     assert am.metadata_kinds(dest) == []
 
 
+CMYK_PROFILE = Path("/System/Library/ColorSync/Profiles/Generic CMYK Profile.icc")
+
+
+@pytest.mark.skipif(not CMYK_PROFILE.exists(), reason="needs a CMYK ICC profile (macOS ships one)")
+def test_a_cmyk_photo_is_converted_through_its_own_profile(am, Image, tmp_path):
+    """The transform has to start from the pixels' own mode: converting CMYK to
+    RGB first mismatches the profile, and the naive conversion's colors are off."""
+    from PIL import ImageCms
+    cyan = Image.new("CMYK", (64, 64), (255, 0, 0, 0))
+    src = tmp_path / "print.jpg"
+    cyan.save(src, icc_profile=CMYK_PROFILE.read_bytes())
+    dest = am.photo(src, "print", out_dir=tmp_path)
+    expected = ImageCms.profileToProfile(cyan, ImageCms.ImageCmsProfile(str(CMYK_PROFILE)),
+                                         ImageCms.createProfile("sRGB"), outputMode="RGB").getpixel((0, 0))
+    naive = cyan.convert("RGB").getpixel((0, 0))
+    with Image.open(dest) as out:
+        got = out.getpixel((32, 32))
+    assert all(abs(g - e) <= 8 for g, e in zip(got, expected)), (got, expected)
+    assert max(abs(g - n) for g, n in zip(got, naive)) > 20, (got, naive)
+
+
 @pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs ffmpeg")
 def test_a_screen_recording_becomes_a_clean_looping_gif(am, Image, tmp_path):
     src = tmp_path / "recording.mp4"
