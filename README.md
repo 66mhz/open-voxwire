@@ -180,6 +180,11 @@ git clone https://github.com/66mhz/open-voxwire && cd open-voxwire
 ./scripts/install.sh          # creates the environment, installs dependencies
 ```
 
+On Linux, install PortAudio first (Debian/Ubuntu: `sudo apt-get install libportaudio2`). On macOS
+the script installs ffmpeg with Homebrew if it's missing. To check an install on macOS or Linux,
+run `voxwire/.venv/bin/python scripts/smoke_test.py`: it starts the server and transcribes a
+test sentence, spoken by `say` on macOS and `espeak-ng` on Linux.
+
 Then either:
 
 ```bash
