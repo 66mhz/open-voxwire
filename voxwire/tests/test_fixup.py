@@ -19,7 +19,7 @@ server = pytest.importorskip(
 httpx = pytest.importorskip("httpx")
 from fastapi.testclient import TestClient  # noqa: E402
 
-client = TestClient(server.app)
+client = TestClient(server.app, base_url="http://127.0.0.1:8123", client=("127.0.0.1", 50000))   # this machine (see LocalOnly)
 MISHEARD = "lit thee files please"
 FIXED = "list the files please"
 

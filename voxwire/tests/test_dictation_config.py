@@ -16,7 +16,7 @@ server = pytest.importorskip(   # conftest sets VOXWIRE_NO_IDLE_WATCH before thi
     "server", reason="audio stack (sounddevice/PortAudio) not importable here")
 from fastapi.testclient import TestClient  # noqa: E402
 
-client = TestClient(server.app)
+client = TestClient(server.app, base_url="http://127.0.0.1:8123", client=("127.0.0.1", 50000))   # this machine (see LocalOnly)
 
 
 @pytest.fixture(autouse=True)
