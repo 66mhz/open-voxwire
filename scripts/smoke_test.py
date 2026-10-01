@@ -8,7 +8,10 @@ machines; run it yourself after installing somewhere new.
 
     voxwire/.venv/bin/python scripts/smoke_test.py
 
-The speech comes from `say` on macOS and `espeak-ng` on Linux. The first run
+It runs on macOS and Linux: the speech comes from `say` on macOS and `espeak-ng`
+on Linux, and there's no synthesizer for Windows yet. On Apple Silicon it fails
+unless the default model runs on MLX, so a broken MLX install can't hide behind
+the faster-whisper fallback. The first run
 downloads the default model. The server gets a spare port, so a Voxwire that's
 already running on 8123 is left alone.
 """
@@ -79,8 +82,20 @@ def synthesize(out: Path) -> None:
     elif shutil.which("espeak-ng"):
         cmd = ["espeak-ng", "-w", str(out), SENTENCE]
     else:
-        fail("no speech synthesizer here; install espeak-ng")
+        fail("no speech synthesizer here: the smoke test uses `say` on macOS and espeak-ng on Linux")
     subprocess.run(cmd, check=True)
+
+
+def require_platform_backend(model: str, system: str, machine: str) -> None:
+    """On Apple Silicon the default model must run on MLX. install.sh adds
+    faster-whisper there too, so when MLX or Parakeet is broken, default_model()
+    quietly falls back to it, and the Mac stack would go untested."""
+    import stt
+
+    backend = stt.MODELS[model].backend
+    if system == "Darwin" and machine == "arm64" and backend != "mlx":
+        fail(f"on Apple Silicon the default model should run on MLX, but it's {model} on "
+             f"{backend}: the MLX install is broken (backends here: {stt.available_backends()})")
 
 
 def check_stt() -> None:
@@ -92,6 +107,7 @@ def check_stt() -> None:
     model = stt.default_model()
     if model is None:
         fail(f"no speech-to-text model can run here (backends: {stt.available_backends() or 'none'})")
+    require_platform_backend(model, platform.system(), platform.machine())
     with tempfile.TemporaryDirectory() as tmp:
         spoken, clip = Path(tmp) / "spoken.wav", Path(tmp) / "clip.wav"
         synthesize(spoken)
