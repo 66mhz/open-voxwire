@@ -111,7 +111,7 @@ def test_the_integrations_endpoint_reports_load_errors_without_their_detail(tmp_
         "raise ImportError('token=sk-not-a-real-secret on build-host.corp.invalid')")
     monkeypatch.setenv("VOXWIRE_PLUGIN_PATH", str(tmp_path))
     gateway.load_integrations(force=True)
-    resp = TestClient(server.app).get("/api/integrations")
+    resp = TestClient(server.app, base_url="http://127.0.0.1:8123", client=("127.0.0.1", 50000)).get("/api/integrations")
     body = resp.json()
     assert any(i["name"] == "echo" for i in body["integrations"])
     assert body["errors"] == {"zz_endpoint_broken.py": "ImportError"}
