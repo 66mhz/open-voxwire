@@ -29,7 +29,15 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".jpe", ".jfif", ".png", ".apng", ".gif", ".webp"}
+# Formats that carry camera metadata but that metadata_kinds can't read. They
+# must not be committed at all: convert them with `add_media.py photo` first.
+UNSCANNED_SUFFIXES = {".tif", ".tiff", ".heic", ".heif", ".avif", ".jxl", ".psd", ".dng",
+                      ".raw", ".cr2", ".cr3", ".nef", ".arw", ".orf", ".rw2", ".raf"}
+# ImageMagick keeps a profile in a PNG text chunk under one of these keywords.
+_RAW_PROFILES = {b"raw profile type exif": "EXIF", b"raw profile type app1": "EXIF",
+                 b"raw profile type xmp": "XMP", b"raw profile type iptc": "IPTC",
+                 b"raw profile type 8bim": "IPTC"}
 
 
 def metadata_kinds(path: Path) -> list[str]:
@@ -40,7 +48,11 @@ def metadata_kinds(path: Path) -> list[str]:
     kinds: set[str] = set()
     if data[:2] == b"\xff\xd8":                               # JPEG: marker segments
         i = 2
-        while i + 4 <= len(data) and data[i] == 0xFF:
+        while i + 1 < len(data) and data[i] == 0xFF:
+            while i + 1 < len(data) and data[i + 1] == 0xFF:  # fill bytes may pad a marker
+                i += 1
+            if i + 4 > len(data):
+                break
             marker = data[i + 1]
             if marker == 0xDA:                                # image data starts: no more metadata
                 break
@@ -62,8 +74,12 @@ def metadata_kinds(path: Path) -> list[str]:
             body = data[i + 8:i + 8 + length]
             if kind == b"eXIf":
                 kinds.add("EXIF")
-            elif kind in (b"iTXt", b"tEXt", b"zTXt") and body.startswith(b"XML:com.adobe.xmp"):
-                kinds.add("XMP")
+            elif kind in (b"iTXt", b"tEXt", b"zTXt"):
+                keyword = body.split(b"\0", 1)[0]
+                if keyword == b"XML:com.adobe.xmp":
+                    kinds.add("XMP")
+                elif keyword.lower() in _RAW_PROFILES:
+                    kinds.add(_RAW_PROFILES[keyword.lower()])
             elif kind == b"IEND":
                 break
             i += 12 + length
