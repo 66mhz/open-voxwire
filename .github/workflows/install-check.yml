@@ -1,0 +1,50 @@
+name: Install check
+
+# does the README's quickstart work on a machine that has never seen
+# Voxwire? Each job is a fresh GitHub-hosted VM with nothing cached: it runs
+# scripts/install.sh the way a user would, then scripts/smoke_test.py, which
+# starts the server and transcribes synthesized speech with the default model
+# (MLX on Apple Silicon, faster-whisper on Linux). Weekly, on demand, and on
+# any change to how Voxwire installs.
+#
+# What it can't cover: a Mac without Homebrew (the runners have it; install.sh
+# says what to do when it's missing), and the microphone, hotkey and macOS
+# permission prompts, which need a person and real hardware.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * 1"        # Mondays, 07:00 UTC
+  pull_request:
+    paths:
+      - scripts/install.sh
+      - scripts/smoke_test.py
+      - pyproject.toml
+      - voxwire/stt/**
+      - .github/workflows/install-check.yml
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: install + smoke test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      # PortAudio is the README's one Linux prerequisite. espeak-ng only speaks
+      # the smoke test's sentence; users don't need it.
+      - name: PortAudio (Linux prerequisite) and espeak-ng (test speech)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libportaudio2 espeak-ng
+
+      - name: Install, as the README says
+        run: ./scripts/install.sh
+
+      - name: Smoke test
+        run: voxwire/.venv/bin/python scripts/smoke_test.py
