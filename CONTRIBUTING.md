@@ -39,7 +39,10 @@ voxwire/.venv/bin/ruff check .
 ```
 
 CI runs the same three (plus a gitleaks secret scan) on every PR — see
-`.github/workflows/ci.yml`. Add real tests for new behavior; report actual
+`.github/workflows/ci.yml`. A change to how Voxwire installs (`scripts/install.sh`,
+`pyproject.toml`, `voxwire/stt/`) also runs the install check: a fresh macOS and
+Linux machine each install Voxwire as the README says, then run `scripts/smoke_test.py`
+(`.github/workflows/install-check.yml`). Add real tests for new behavior; report actual
 results and never claim green if red.
 
 ## Project conventions
