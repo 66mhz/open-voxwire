@@ -138,7 +138,7 @@ def start_server_in_thread():
         return False
     import uvicorn
     import server  # imported here; its module-level idle-watch thread is fine
-    cfg = uvicorn.Config(server.app, host="127.0.0.1", port=PORT, log_level="warning")
+    cfg = uvicorn.Config(server.app, **{**server.UVICORN, "port": PORT})
     srv = uvicorn.Server(cfg)
     threading.Thread(target=srv.run, daemon=True).start()
     return True

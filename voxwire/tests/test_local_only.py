@@ -116,3 +116,45 @@ def test_every_route_refuses_a_rebound_page(method, path):
 ])
 def test_loopback_host(host, ok):
     assert server._loopback_host(host) is ok
+
+
+# ── the peer is the real connection ────────────────────────────────────────
+def test_a_forwarded_header_cannot_stand_in_for_the_peer():
+    """Uvicorn trusts X-Forwarded-For from 127.0.0.1 unless told not to, so a
+    local reverse proxy (or any local process) could replace the peer LocalOnly
+    checks. Every launcher serves with server.UVICORN, which turns that off; a
+    real server shows the header is ignored."""
+    import socket
+    import threading
+    import time
+    import urllib.request
+
+    import uvicorn
+
+    assert server.UVICORN["proxy_headers"] is False and server.UVICORN["host"] == "127.0.0.1"
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    srv = uvicorn.Server(uvicorn.Config(server.app, **{**server.UVICORN, "port": port}))
+    thread = threading.Thread(target=srv.run, daemon=True)
+    thread.start()
+    try:
+        for _ in range(200):
+            if srv.started:
+                break
+            time.sleep(0.05)
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/integrations",
+                                     headers={"X-Forwarded-For": "203.0.113.9"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            assert resp.status == 200
+    finally:
+        srv.should_exit = True
+        thread.join(timeout=10)
+
+
+@pytest.mark.parametrize("launcher", ["menubar.py", "tray.py"])
+def test_the_app_launchers_serve_with_the_same_options(launcher):
+    """The menubar and tray apps need a GUI stack to import, so check their source."""
+    from pathlib import Path
+    source = (Path(server.__file__).parent / launcher).read_text()
+    assert "uvicorn.Config(server.app, **{**server.UVICORN," in source

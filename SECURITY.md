@@ -75,8 +75,9 @@ paths the agent cannot talk its way around. See `docs/DESIGN.md §3` for the des
 - **Keep the server on loopback.** If you must reach it remotely, tunnel it (e.g.
   SSH/Tailscale) and add authentication — Voxwire ships none. An SSH port forward
   arrives as a loopback request and works as is. A reverse proxy is refused unless
-  it rewrites the Host and Origin headers, and doing that switches these checks off
-  for everything behind it, so put your authentication in that proxy.
+  it rewrites the Host and Origin headers (Voxwire ignores `X-Forwarded-For`, so
+  the peer it checks is the proxy's own connection), and doing that switches these
+  checks off for everything behind it, so put your authentication in that proxy.
 - **Mind the room.** A mic others can reach is a command surface. Use push-to-talk,
   and prefer the throat mic where acoustic injection is a concern.
 - **Review integrations before installing them.** A plugin runs in your process
