@@ -18,6 +18,11 @@ fi
 # 2. ffmpeg — only the MLX/parakeet path (macOS) needs it; faster-whisper decodes
 # via bundled PyAV, so it's skipped off macOS (where brew wouldn't exist anyway).
 if [ "$(uname -s)" = "Darwin" ] && ! command -v ffmpeg >/dev/null 2>&1; then
+  if ! command -v brew >/dev/null 2>&1; then
+    echo "✗ Voxwire needs ffmpeg on macOS, and installs it with Homebrew, which isn't here." >&2
+    echo "  Install Homebrew (https://brew.sh) or ffmpeg, then run this again." >&2
+    exit 1
+  fi
   echo "  installing ffmpeg (brew)…"
   brew install ffmpeg
 fi
@@ -42,6 +47,18 @@ uv pip install --python "$PY" \
   $mac_pkgs faster-whisper pyperclip pystray pillow \
   sounddevice numpy scipy soundfile \
   fastapi "uvicorn[standard]" pynput httpx websockets
+
+# 4. A first run records through PortAudio. The macOS and Windows sounddevice
+# wheels bundle it; Linux needs the system library, so say how to get it here
+# rather than fail later at startup.
+if ! "$PY" -c "import sounddevice" >/dev/null 2>&1; then
+  echo "✗ PortAudio, the audio library Voxwire records through, is missing." >&2
+  echo "  Debian/Ubuntu: sudo apt-get install libportaudio2" >&2
+  echo "  Fedora:        sudo dnf install portaudio" >&2
+  echo "  Arch:          sudo pacman -S portaudio" >&2
+  echo "  Then run this again." >&2
+  exit 1
+fi
 
 echo
 echo "✓ installed. Next:"
