@@ -30,6 +30,17 @@ jobs:
         with:
           fetch-depth: 0   # full history, all branches
 
+      # The checkout belongs to the runner's user and steps run as root, so git
+      # refuses it ("dubious ownership"). gitleaks then scans nothing and still
+      # reports "no leaks found"; leakcheck at least fails. Mark it safe, then
+      # prove git can read the history before trusting either scan.
+      - name: Let git read the checkout
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          commits=$(git rev-list --all --count)
+          test "$commits" -gt 0
+          echo "$commits commits on all refs to scan"
+
       - name: Install gitleaks
         run: |
           VERSION=8.18.4
