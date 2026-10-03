@@ -2,8 +2,8 @@
 
 **Voxwire** is a throat-mic-native, local-first voice agent: speak (stealth throat
 mic *or* regular mic) → on-device STT → a tool-capable agent runs work across the
-systems you connect. This repo is **public-bound** (currently **private**).
-Architecture: read `docs/DESIGN.md` first.
+systems you connect. This repo is **public**: anyone can read its code, history,
+issues and pull requests. Architecture: read `docs/DESIGN.md` first.
 
 The differentiator is the **throat mic**: it's band-limited (loses consonants), so
 Voxwire is built to handle that (dual-mic fusion, enhancement, faithful fixup) —
@@ -24,11 +24,12 @@ not just another Whisper wrapper.
    the specific private terms listed there. Keep that denylist current — it lists
    the names/hosts to catch and is never committed, so the guard itself stays
    leak-free.
-2. **Private-first.** Do NOT `git push`, change repo visibility, or publish anything
-   without explicit human approval. Local commits are fine. (Tooling denies `push`.)
-   Before any visibility change, `./scripts/leakcheck.sh --history` (with the
-   denylist present) and the manual *History audit* workflow must both be clean —
-   CI scans only the working tree, and removed terms still live in history.
+2. **Publishing is a human decision.** Do NOT push to `main`, change repo settings
+   or visibility, publish a release, or post anything public without explicit
+   human approval. Local commits are fine. (Tooling denies `push`.) Whatever is
+   pushed is public at once and stays in history, so rule 1's check runs before
+   every commit; `./scripts/leakcheck.sh --history` (with the denylist present)
+   and the manual *History audit* workflow check the whole history.
 3. **Security is structural, not prompt-based.** Confirmation state is owned by the
    **executor** — the agent must never be able to self-approve. Effective permission
    = `persona.tool_scope ∩ executor.host_tier`, computed in ONE function,
@@ -73,18 +74,9 @@ not just another Whisper wrapper.
 
 ## Where the work is
 
-Source of truth: **Linear** → milestone *Voxwire — Open Source* (issues
-**BYT-116…123**). Recommended dependency order:
-
-1. **BYT-116** — genericize the gateway → plugin router (linchpin; removes the
-   hardcoded private webhook). Nothing ships public until this is done.
-2. **BYT-123** — decide the public↔private sync strategy (before code diverges).
-3. **BYT-118** — dual-mic fusion (throat + air) — the differentiator.
-4. **BYT-120** — faithful intent-first fixup (port from the prototype).
-5. **BYT-119** enhancement · **BYT-121** deploy · **BYT-122** hygiene + CI
-   (**must pass before any public flip**) · **BYT-117** SlackOps (private plugin).
-
-If Linear isn't reachable, this list *is* the plan.
+The roadmap is in `docs/DESIGN.md` (*Status / roadmap*); bugs and proposals go
+in GitHub issues. IDs like `BYT-151` in commits and docs point to the
+maintainer's own tracker.
 
 ## Definition of done (every change)
 

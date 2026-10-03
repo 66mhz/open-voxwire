@@ -185,7 +185,7 @@ and there is one source of truth for the core.
   - an installed overlay package declares them in the `voxwire.integrations`
     entry-point group (a module that calls `register(...)`, an `Integration`
     instance, or an `Integration` subclass), e.g.
-    `[project.entry-points."voxwire.integrations"] slackops = "overlay.slackops"`;
+    `[project.entry-points."voxwire.integrations"] chatops = "overlay.chatops"`;
   - or `VOXWIRE_PLUGIN_PATH` names folders of plugin modules
     (`os.pathsep`-separated), for an overlay that isn't packaged.
 
@@ -195,10 +195,8 @@ and there is one source of truth for the core.
   rolled back, so a skipped plugin never receives commands. It is listed under
   `errors` in `GET /api/integrations` by file / entry-point name and exception
   type only; the full message, which may hold a token or internal host name, goes
-  to the local log. SlackOps (BYT-117) is the first such plugin.
+  to the local log.
 
-(The public flip itself is deferred — building continues privately until the
-history/hygiene gate is cleared and approved.)
 
 ## Status / roadmap
 
