@@ -63,6 +63,10 @@ to talk over engine noise.
 <a href="https://commons.wikimedia.org/wiki/File:Throat_Microphone._Out_of_the_package..jpg">"Throat Microphone. Out of the package."</a>
 by Jshin722, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a></sub>
 </td>
+<td align="center" valign="top">
+<img height="260" alt="An IASUS STEALTH throat mic lying on white paper: a black elastic strap with a buckle at the back, two round, knurled transducer pods, and a rubber band across the front with volume buttons." src="docs/images/iasus-stealth.jpg"><br>
+<sub>An IASUS STEALTH, the throat mic<br>Voxwire is developed with.</sub>
+</td>
 </tr>
 </table>
 
