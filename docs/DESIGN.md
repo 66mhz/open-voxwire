@@ -197,8 +197,6 @@ and there is one source of truth for the core.
   type only; the full message, which may hold a token or internal host name, goes
   to the local log.
 
-(The public flip itself is deferred — building continues privately until the
-history/hygiene gate is cleared and approved.)
 
 ## Status / roadmap
 

@@ -2,8 +2,8 @@
 
 **Voxwire** is a throat-mic-native, local-first voice agent: speak (stealth throat
 mic *or* regular mic) → on-device STT → a tool-capable agent runs work across the
-systems you connect. This repo is **public-bound** (currently **private**).
-Architecture: read `docs/DESIGN.md` first.
+systems you connect. This repo is **public**: anyone can read its code, history,
+issues and pull requests. Architecture: read `docs/DESIGN.md` first.
 
 The differentiator is the **throat mic**: it's band-limited (loses consonants), so
 Voxwire is built to handle that (dual-mic fusion, enhancement, faithful fixup) —
@@ -24,11 +24,12 @@ not just another Whisper wrapper.
    the specific private terms listed there. Keep that denylist current — it lists
    the names/hosts to catch and is never committed, so the guard itself stays
    leak-free.
-2. **Private-first.** Do NOT `git push`, change repo visibility, or publish anything
-   without explicit human approval. Local commits are fine. (Tooling denies `push`.)
-   Before any visibility change, `./scripts/leakcheck.sh --history` (with the
-   denylist present) and the manual *History audit* workflow must both be clean —
-   CI scans only the working tree, and removed terms still live in history.
+2. **Publishing is a human decision.** Do NOT push to `main`, change repo settings
+   or visibility, publish a release, or post anything public without explicit
+   human approval. Local commits are fine. (Tooling denies `push`.) Whatever is
+   pushed is public at once and stays in history, so rule 1's check runs before
+   every commit; `./scripts/leakcheck.sh --history` (with the denylist present)
+   and the manual *History audit* workflow check the whole history.
 3. **Security is structural, not prompt-based.** Confirmation state is owned by the
    **executor** — the agent must never be able to self-approve. Effective permission
    = `persona.tool_scope ∩ executor.host_tier`, computed in ONE function,
